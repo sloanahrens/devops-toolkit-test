@@ -48,9 +48,53 @@ jobs:
                 echo "*** WEBAPP LOGS:" && echo "$(docker logs stockpicker_webapp)" && \
                 exit 1)
             docker-compose -f docker/docker-compose-local-image-stack.yaml down
+      - run:
+          name: Push Docker Images
+          command: |
+            set -x
+            export PATH="$PATH:$(python -m site --user-base)/bin"
+            $(aws ecr get-login --no-include-email --region us-east-2)
+            IMAGE_TAG=$(echo "$CIRCLE_BRANCH" | sed 's/[^a-zA-Z0-9]/-/g'| sed -e 's/\(.*\)/\L\1/')
+            AWS_REGION=us-east-2
+            ECR_ID=421987441365
+            docker tag webapp $ECR_ID.dkr.ecr.$AWS_REGION.amazonaws.com/stockpicker/webapp:$IMAGE_TAG
+            docker tag celery $ECR_ID.dkr.ecr.$AWS_REGION.amazonaws.com/stockpicker/celery:$IMAGE_TAG
+            docker push $ECR_ID.dkr.ecr.$AWS_REGION.amazonaws.com/stockpicker/webapp:$IMAGE_TAG
+            docker push $ECR_ID.dkr.ecr.$AWS_REGION.amazonaws.com/stockpicker/celery:$IMAGE_TAG
+
+  tagged_image_test:
+    <<: *defaults
+    steps:
+      - checkout
+      - setup_remote_docker:
+          version: 17.03.0-ce
+      - run:
+          name: Build Stack Tester Image
+          command: |
+            set -x
+            docker build -t stacktest -f docker/stacktest/Dockerfile .
+      - run:
+          name: Run Integration Tests With Pushed Images
+          command: |
+            set -x
+            export IMAGE_TAG=$(echo "$CIRCLE_BRANCH" | sed 's/[^a-zA-Z0-9]/-/g'| sed -e 's/\(.*\)/\L\1/')
+            export AWS_REGION=us-east-2
+            export ECR_ID=421987441365
+            $(aws ecr get-login --no-include-email --region us-east-2)
+            docker-compose -f docker/docker-compose-tagged-image-stack.yaml up -d
+            docker run -e SERVICE="localhost:8001" --network container:stockpicker_webapp stacktest ./integration-tests.sh \
+                || \
+                (echo "*** WORKER1 LOGS:" && echo "$(docker logs stockpicker_worker1)" && \
+                echo "*** WORKER2 LOGS:" && echo "$(docker logs stockpicker_worker2)" && \
+                echo "*** WEBAPP LOGS:" && echo "$(docker logs stockpicker_webapp)" && \
+                exit 1)
+            docker-compose -f docker/docker-compose-tagged-image-stack.yaml down
 
 workflows:
   version: 2
   build-and-deploy:
     jobs:
       - image_build_test_push
+      - tagged_image_test:
+          requires:
+            - image_build_test_push
