@@ -1,0 +1,9 @@
+.circleci
+ci_scripts
+django/venv
+kubernetes
+tutorials
+source
+src
+_static
+db.sqlite3

@@ -1,0 +1,56 @@
+defaults: &defaults
+  docker:
+    - image: sloanahrens/devops-toolkit-ci-dev-env:0.0.3
+version: 2
+jobs:
+
+  image_build_test_push:
+    <<: *defaults
+    steps:
+      - checkout
+      - setup_remote_docker:
+          version: 17.03.0-ce
+      - run:
+          name: Build Base Image
+          command: |
+            set -x
+            docker build -t baseimage -f docker/baseimage/Dockerfile .
+      - run:
+          name: Build Webapp Image
+          command: |
+            set -x
+            docker build -t webapp -f docker/webapp/Dockerfile .
+      - run:
+          name: Build Celery Image
+          command: |
+            set -x
+            docker build -t celery -f docker/celery/Dockerfile .
+      - run:
+          name: Build Stack Tester Image
+          command: |
+            set -x
+            docker build -t stacktest -f docker/stacktest/Dockerfile .
+      - run:
+          name: Run Django Unit Tests
+          command: |
+            set -x
+            docker-compose -f docker/docker-compose-unit-test.yaml run unit-test
+            docker-compose -f docker/docker-compose-unit-test.yaml down
+      - run:
+          name: Run Integration Tests Against Local Docker-Compose Stack
+          command: |
+            set -x
+            docker-compose -f docker/docker-compose-local-image-stack.yaml up -d
+            docker run -e SERVICE="localhost:8001" --network container:stockpicker_webapp stacktest ./integration-tests.sh \
+                || \
+                (echo "*** WORKER1 LOGS:" && echo "$(docker logs stockpicker_worker1)" && \
+                echo "*** WORKER2 LOGS:" && echo "$(docker logs stockpicker_worker2)" && \
+                echo "*** WEBAPP LOGS:" && echo "$(docker logs stockpicker_webapp)" && \
+                exit 1)
+            docker-compose -f docker/docker-compose-local-image-stack.yaml down
+
+workflows:
+  version: 2
+  build-and-deploy:
+    jobs:
+      - image_build_test_push
