@@ -1,8 +1,56 @@
 defaults: &defaults
   docker:
     - image: sloanahrens/devops-toolkit-ci-dev-env:0.0.3
+
 version: 2
 jobs:
+
+  update_kubernetes_cluster:
+    <<: *defaults
+    steps:
+      - checkout
+      - run:
+          name: Terraform Apply
+          command: |
+            set -x
+            cd kubernetes/us-west-2/cluster
+            terraform init
+            terraform plan
+            terraform apply --auto-approve
+      - run:
+          name: Kops Rolling Update
+          command: |
+            set -x
+            CLUSTER_NAME=devops-toolkit-us-west-2.k8s.local
+            BUCKET_NAME=devops-toolkit-k8s-state-us-west-2
+            cd kubernetes/us-west-2/cluster
+            gpg --decrypt --batch --yes --passphrase $KUBECONFIG_PASSPHRASE kubecfg.yaml.gpg > kubecfg.yaml
+            export KUBECONFIG=$PWD/kubecfg.yaml
+            kops rolling-update cluster --name $CLUSTER_NAME --state s3://$BUCKET_NAME --yes
+      - run:
+          name: Kops Validate Cluster
+          command: |
+            set -x
+            sleep 30
+            CLUSTER_NAME=devops-toolkit-us-west-2.k8s.local
+            BUCKET_NAME=devops-toolkit-k8s-state-us-west-2
+            cd kubernetes/us-west-2/cluster
+            gpg --decrypt --batch --yes --passphrase $KUBECONFIG_PASSPHRASE kubecfg.yaml.gpg > kubecfg.yaml
+            export KUBECONFIG=$PWD/kubecfg.yaml
+            kops validate cluster --name $CLUSTER_NAME --state s3://$BUCKET_NAME
+      - run:
+          name: Update K8s Dependencies
+          command: |
+            set -x
+            cd kubernetes/us-west-2/cluster
+            gpg --decrypt --batch --yes --passphrase $KUBECONFIG_PASSPHRASE kubecfg.yaml.gpg > kubecfg.yaml
+            export KUBECONFIG=$PWD/kubecfg.yaml
+            cd ../../..
+            kubectl apply -f kubernetes/specs/kubernetes-dashboard.yaml
+            kubectl apply -f kubernetes/specs/external-dns.yaml
+            kubectl apply -f kubernetes/specs/nginx-ingress-controller.yaml
+            kubectl apply -f kubernetes/us-west-2/specs/nginx-ingress-load-balancer.yaml
+            kubectl apply -f kubernetes/us-west-2/specs/aws-efs.yaml
 
   image_build_test_push:
     <<: *defaults
@@ -11,10 +59,35 @@ jobs:
       - setup_remote_docker:
           version: 17.03.0-ce
       - run:
+          name: Cache Directory
+          command: |
+            set -x
+            mkdir -p /caches
+      - restore_cache:
+          key: v1-{{ .Branch }}-{{ checksum "django/requirements.txt" }}
+          paths:
+            - /caches/baseimage.tar
+      - run:
+          name: Load Base Image From Cache
+          command: |
+            set -x
+            if [ -e /caches/baseimage.tar ]; then
+              docker load -i /caches/baseimage.tar
+            fi
+      - run:
           name: Build Base Image
           command: |
             set -x
-            docker build -t baseimage -f docker/baseimage/Dockerfile .
+            docker build --cache-from=baseimage -t baseimage -f docker/baseimage/Dockerfile .
+      - run:
+          name: Save Base Image To Cache
+          command: |
+            set -x
+            docker save -o /caches/baseimage.tar baseimage
+      - save_cache:
+          key: v1-{{ .Branch }}-{{ checksum "django/requirements.txt" }}
+          paths:
+            - /caches/baseimage.tar
       - run:
           name: Build Webapp Image
           command: |
@@ -43,10 +116,8 @@ jobs:
             docker-compose -f docker/docker-compose-local-image-stack.yaml up -d
             docker run -e SERVICE="localhost:8001" --network container:stockpicker_webapp stacktest ./integration-tests.sh \
                 || \
-                (echo "*** WORKER1 LOGS:" && echo "$(docker logs stockpicker_worker1)" && \
-                echo "*** WORKER2 LOGS:" && echo "$(docker logs stockpicker_worker2)" && \
-                echo "*** WEBAPP LOGS:" && echo "$(docker logs stockpicker_webapp)" && \
-                exit 1)
+                (echo "*** WORKER LOGS:" && echo "$(docker logs stockpicker_worker)" && \
+                echo "*** WEBAPP LOGS:" && echo "$(docker logs stockpicker_webapp)" && exit 1)
             docker-compose -f docker/docker-compose-local-image-stack.yaml down
       - run:
           name: Push Docker Images
@@ -94,6 +165,7 @@ workflows:
   version: 2
   build-and-deploy:
     jobs:
+      - update_kubernetes_cluster
       - image_build_test_push
       - tagged_image_test:
           requires:
