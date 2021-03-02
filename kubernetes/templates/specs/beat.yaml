@@ -1,0 +1,35 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: beat
+  labels:
+    stack: STACK_NAME
+spec:
+  serviceName: beat
+  replicas: beat_REPLICAS
+  selector:
+    matchLabels:
+      type: celery-app
+      service: beat
+  template:
+    metadata:
+      labels:
+        type: celery-app
+        service: beat
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+      - name: beat
+        image: ECR_ID.dkr.ecr.ECR_REGION.amazonaws.com/stellarbot/celery:IMAGE_TAG
+        imagePullPolicy: Always
+        resources:
+          requests:
+            memory: 256Mi
+          limits:
+            memory: 512Mi
+        envFrom:
+        - configMapRef:
+            name: webapp-config
+        command: ["/bin/bash"]
+        args: ["-c", "sleep 30 && celery --app=stellarbot.celery beat --loglevel=info"]

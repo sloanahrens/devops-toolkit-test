@@ -1,0 +1,51 @@
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: webapp
+  labels:
+    stack: STACK_NAME
+    type: django-app
+    service: webapp
+spec:
+  clusterIP: None
+  selector:
+    type: django-app
+    service: webapp
+  ports:
+  - name: web
+    port: 8000
+    targetPort: 8000
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: webapp
+  labels:
+    stack: STACK_NAME
+spec:
+  serviceName: webapp
+  replicas: WEBAPP_REPLICAS
+  selector:
+    matchLabels:
+      type: django-app
+      service: webapp
+  template:
+    metadata:
+      labels:
+        type: django-app
+        service: webapp
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+      - name: webapp
+        image: ECR_ID.dkr.ecr.ECR_REGION.amazonaws.com/stellarbot/webapp:IMAGE_TAG
+        imagePullPolicy: Always
+        resources:
+          requests:
+            memory: 256Mi
+          limits:
+            memory: 512Mi
+        envFrom:
+        - configMapRef:
+            name: webapp-config

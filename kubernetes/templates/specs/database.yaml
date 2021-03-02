@@ -1,0 +1,41 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: database
+  labels:
+    stack: STACK_NAME
+spec:
+  clusterIP: None
+  ports:
+  - port: 5432
+  selector:
+    type: database
+    service: postgres
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+  labels:
+    stack: STACK_NAME
+spec:
+  serviceName: postgres
+  selector:
+    matchLabels:
+      type: database
+      service: postgres
+  template:
+    metadata:
+      labels:
+        type: database
+        service: postgres
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+      - name: postgres
+        image: postgres:9.4
+        imagePullPolicy: IfNotPresent
+        envFrom:
+        - configMapRef:
+            name: database-config
