@@ -1,0 +1,9 @@
+FROM node:lts-alpine
+WORKDIR /app
+RUN npm install -g @vue/cli
+
+EXPOSE 80
+
+USER node
+
+CMD ["/bin/sh", "-c", "npm install && npm run serve -- --port 80"]

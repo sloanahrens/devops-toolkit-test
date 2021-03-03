@@ -1,0 +1,157 @@
+{
+  "version": 2,
+  "timeout": "3000ms",
+  "cache_ttl": "300s",
+  "output_encoding": "json",
+  "name": "jwt-check",
+  "port": 9999,
+  "disable_rest": true,
+  "extra_config": {
+    "github_com/devopsfaith/krakend-gologging": {
+      "level":  "DEBUG",
+      "prefix": "[KRAKEND]",
+      "syslog": false,
+      "stdout": true
+    }
+  },
+  "endpoints": [
+    {
+      "endpoint": "/api/v0.1/ledgers",
+      "method": "GET",
+      "output_encoding": "no-op",
+      "headers_to_pass": [
+        "Authorization",
+        "Content-Type",
+        "Host"
+      ],
+      "backend": [
+        {
+          "url_pattern": "/data/ledgers",
+          "encoding": "no-op",
+          "sd": "static",
+          "method": "GET",
+          "extra_config": {},
+          "disable_host_sanitize": true,
+          "host": [
+            "http://webapp:8000"
+          ]
+        }
+      ]
+    },
+    {
+      "endpoint": "/",
+      "method": "GET",
+      "output_encoding": "no-op",
+      "headers_to_pass": [
+        "Authorization",
+        "Content-Type",
+        "Host"
+      ],
+      "backend": [
+        {
+          "url_pattern": "/",
+          "encoding": "no-op",
+          "sd": "static",
+          "method": "GET",
+          "extra_config": {},
+          "disable_host_sanitize": true,
+          "host": [
+            "http://ui:80"
+          ]
+        }
+      ]
+    },
+    {
+      "endpoint": "/js/{filename}",
+      "method": "GET",
+      "output_encoding": "no-op",
+      "headers_to_pass": [
+        "Authorization",
+        "Content-Type",
+        "Host"
+      ],
+      "backend": [
+        {
+          "url_pattern": "/js/{filename}",
+          "encoding": "no-op",
+          "sd": "static",
+          "method": "GET",
+          "extra_config": {},
+          "disable_host_sanitize": true,
+          "host": [
+            "http://ui:80"
+          ]
+        }
+      ]
+    },
+    {
+      "endpoint": "/img/{filename}",
+      "method": "GET",
+      "output_encoding": "no-op",
+      "headers_to_pass": [
+        "Authorization",
+        "Content-Type",
+        "Host"
+      ],
+      "backend": [
+        {
+          "url_pattern": "/img/{filename}",
+          "encoding": "no-op",
+          "sd": "static",
+          "method": "GET",
+          "extra_config": {},
+          "disable_host_sanitize": true,
+          "host": [
+            "http://ui:80"
+          ]
+        }
+      ]
+    },
+    {
+      "endpoint": "/css/{filename}",
+      "method": "GET",
+      "output_encoding": "no-op",
+      "headers_to_pass": [
+        "Authorization",
+        "Content-Type",
+        "Host"
+      ],
+      "backend": [
+        {
+          "url_pattern": "/css/{filename}",
+          "encoding": "no-op",
+          "sd": "static",
+          "method": "GET",
+          "extra_config": {},
+          "disable_host_sanitize": true,
+          "host": [
+            "http://ui:80"
+          ]
+        }
+      ]
+    },
+    {
+      "endpoint": "/favicon.ico",
+      "method": "GET",
+      "output_encoding": "no-op",
+      "headers_to_pass": [
+        "Authorization",
+        "Content-Type",
+        "Host"
+      ],
+      "backend": [
+        {
+          "url_pattern": "/favicon.ico",
+          "encoding": "no-op",
+          "sd": "static",
+          "method": "GET",
+          "extra_config": {},
+          "disable_host_sanitize": true,
+          "host": [
+            "http://ui:80"
+          ]
+        }
+      ]
+    }
+  ]
+}

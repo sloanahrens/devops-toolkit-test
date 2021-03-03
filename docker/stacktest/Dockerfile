@@ -1,8 +1,12 @@
-FROM yikaus/alpine-bash
+FROM alpine
 
 WORKDIR /usr/src
 
-RUN apk update && apk upgrade && apk add curl jq
+RUN apk add --no-cache \
+        bash \
+        curl \
+        jq \
+    && rm -rf /var/cache/apk/*
 
-COPY ./docker/scripts/integration-tests.sh .
+COPY ./docker/stacktest/integration-tests.sh .
 RUN chmod 755 /usr/src/integration-tests.sh

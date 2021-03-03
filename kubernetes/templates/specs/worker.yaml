@@ -1,0 +1,30 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: worker
+  labels:
+    stack: STACK_NAME
+spec:
+  serviceName: worker
+  replicas: WORKER_REPLICAS
+  selector:
+    matchLabels:
+      type: celery-app
+      service: worker
+  template:
+    metadata:
+      labels:
+        type: celery-app
+        service: worker
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+      - name: worker
+        image: ECR_ID.dkr.ecr.ECR_REGION.amazonaws.com/stellarbot/django:IMAGE_TAG
+        imagePullPolicy: Always
+        envFrom:
+        - configMapRef:
+            name: stack-config
+        command: ["/bin/bash"]
+        args: ["-c", "export C_FORCE_ROOT=true && celery --app=stellarbot.celery worker -O fair -c 1 --loglevel=info"]

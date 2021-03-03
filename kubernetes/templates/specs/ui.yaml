@@ -1,0 +1,51 @@
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: ui
+  labels:
+    stack: STACK_NAME
+    type: vue-app
+    service: ui
+spec:
+  clusterIP: None
+  selector:
+    type: vue-app
+    service: ui
+  ports:
+  - name: web
+    port: 80
+    targetPort: 80
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: ui
+  labels:
+    stack: STACK_NAME
+spec:
+  serviceName: ui
+  replicas: UI_REPLICAS
+  selector:
+    matchLabels:
+      type: vue-app
+      service: ui
+  template:
+    metadata:
+      labels:
+        type: vue-app
+        service: ui
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+      - name: ui
+        image: ECR_ID.dkr.ecr.ECR_REGION.amazonaws.com/stellarbot/ui:IMAGE_TAG
+        imagePullPolicy: Always
+        resources:
+          requests:
+            memory: 256Mi
+          limits:
+            memory: 512Mi
+        envFrom:
+        - configMapRef:
+            name: stack-config

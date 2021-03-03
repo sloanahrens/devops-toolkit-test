@@ -1,172 +1,135 @@
 defaults: &defaults
   docker:
-    - image: sloanahrens/devops-toolkit-ci-dev-env:0.0.3
+    - image: sloanahrens/devops-toolkit-ci-dev-env:0.1
 
 version: 2
 jobs:
 
-  update_kubernetes_cluster:
+  python_linting:
     <<: *defaults
     steps:
       - checkout
-      - run:
-          name: Terraform Apply
-          command: |
-            set -x
-            cd kubernetes/us-west-2/cluster
-            terraform init
-            terraform plan
-            terraform apply --auto-approve
-      - run:
-          name: Kops Rolling Update
-          command: |
-            set -x
-            CLUSTER_NAME=devops-toolkit-us-west-2.k8s.local
-            BUCKET_NAME=devops-toolkit-k8s-state-us-west-2
-            cd kubernetes/us-west-2/cluster
-            gpg --decrypt --batch --yes --passphrase $KUBECONFIG_PASSPHRASE kubecfg.yaml.gpg > kubecfg.yaml
-            export KUBECONFIG=$PWD/kubecfg.yaml
-            kops rolling-update cluster --name $CLUSTER_NAME --state s3://$BUCKET_NAME --yes
-      - run:
-          name: Kops Validate Cluster
-          command: |
-            set -x
-            sleep 30
-            CLUSTER_NAME=devops-toolkit-us-west-2.k8s.local
-            BUCKET_NAME=devops-toolkit-k8s-state-us-west-2
-            cd kubernetes/us-west-2/cluster
-            gpg --decrypt --batch --yes --passphrase $KUBECONFIG_PASSPHRASE kubecfg.yaml.gpg > kubecfg.yaml
-            export KUBECONFIG=$PWD/kubecfg.yaml
-            kops validate cluster --name $CLUSTER_NAME --state s3://$BUCKET_NAME
-      - run:
-          name: Update K8s Dependencies
-          command: |
-            set -x
-            cd kubernetes/us-west-2/cluster
-            gpg --decrypt --batch --yes --passphrase $KUBECONFIG_PASSPHRASE kubecfg.yaml.gpg > kubecfg.yaml
-            export KUBECONFIG=$PWD/kubecfg.yaml
-            cd ../../..
-            kubectl apply -f kubernetes/specs/kubernetes-dashboard.yaml
-            kubectl apply -f kubernetes/specs/external-dns.yaml
-            kubectl apply -f kubernetes/specs/nginx-ingress-controller.yaml
-            kubectl apply -f kubernetes/us-west-2/specs/nginx-ingress-load-balancer.yaml
-            kubectl apply -f kubernetes/us-west-2/specs/aws-efs.yaml
+      # - run:
+      #     name: "Pip Install"
+      #     command: pip install flake8>=3.7.7 --user circleci
+      # - run:
+      #     name: "Python Linting"
+      #     command: cd django/stockpicker && python -m flake8 --ignore E501
 
   image_build_test_push:
     <<: *defaults
     steps:
       - checkout
       - setup_remote_docker:
-          version: 17.03.0-ce
+          version: '20.10.2'
       - run:
-          name: Cache Directory
+          name: Build Images
           command: |
             set -x
-            mkdir -p /caches
-      - restore_cache:
-          key: v1-{{ .Branch }}-{{ checksum "django/requirements.txt" }}
-          paths:
-            - /caches/baseimage.tar
+            export IMAGE_TAG=$(echo "$TRAVIS_BRANCH" | sed 's/[^a-zA-Z0-9]/-/g'| sed -e 's/\(.*\)/\L\1/')
+            echo "IMAGE_TAG: ${IMAGE_TAG}"
+            bash bash-scripts/images/build-docker-images.sh
       - run:
-          name: Load Base Image From Cache
+          name: Docker-Compose Tests
           command: |
             set -x
-            if [ -e /caches/baseimage.tar ]; then
-              docker load -i /caches/baseimage.tar
+            export IMAGE_TAG=$(echo "$TRAVIS_BRANCH" | sed 's/[^a-zA-Z0-9]/-/g'| sed -e 's/\(.*\)/\L\1/')
+            echo "IMAGE_TAG: ${IMAGE_TAG}"
+            bash bash-scripts/testing/docker-compose-stack-test-local.sh
+      - run:
+          name: Push to ECR
+          command: |
+            set -x
+            export IMAGE_TAG=$(echo "$TRAVIS_BRANCH" | sed 's/[^a-zA-Z0-9]/-/g'| sed -e 's/\(.*\)/\L\1/')
+            echo "IMAGE_TAG: ${IMAGE_TAG}"
+            bash bash-scripts/images/push-docker-images.sh
+      - run:
+          name: K8s Tests
+          command: |
+            set -x
+            export IMAGE_TAG=$(echo "$TRAVIS_BRANCH" | sed 's/[^a-zA-Z0-9]/-/g'| sed -e 's/\(.*\)/\L\1/')
+            echo "IMAGE_TAG: ${IMAGE_TAG}"
+            CLUSTER_REGION='us-east-2'
+            CLUSTER_PATH="kubernetes/${CLUSTER_REGION}/dev"
+            source ${CLUSTER_PATH}/environment.sh
+            export SOURCE_PATH="/src/${CLUSTER_PATH}"
+            echo "SOURCE_PATH: ${SOURCE_PATH}"
+            export STACK_NAME="ci-${TRAVIS_BUILD_NUMBER}-${IMAGE_TAG}"
+            echo "STACK_NAME: ${STACK_NAME}"
+            export CONFIG_PATH='/src/kubernetes/stack-config/test'
+            echo "-- Attempting to pull kubeconfig..."
+            bash bash-scripts/k8s-clusters/pull-kube-config.sh
+            if [ -f "${CLUSTER_PATH}/cluster/kubecfg.yaml" ]; then
+              echo "-- Attempting to validate cluster..."
+              bash bash-scripts/k8s-clusters/validate-cluster.sh
+              echo "-- Deploying K8s app-stack to ${CLUSTER_REGION}..."
+              bash bash-scripts/app-stacks/deploy-k8s-app-stack.sh
+              # this is inelegant, but avoids DNS cacheing problems in test script
+              echo "-- Sleeping 120 seconds..."
+              sleep 120
+              echo "-- Running API functional-tests against K8s app-stack..."
+              docker run --rm SERVICE="${STACK_NAME}.{DOMAIN_NAME}" stacktest ./integration-tests.sh
+              echo "-- Destroying app-stack..."
+              bash bash-scripts/app-stacks/destroy-k8s-app-stack.sh
+              echo "-- Kubernetes-stack functional tests succeeded."
+            else
+              echo "-- Kubernetes cluster not found, so not running K8s tests."
             fi
-      - run:
-          name: Build Base Image
-          command: |
-            set -x
-            docker build --cache-from=baseimage -t baseimage -f docker/baseimage/Dockerfile .
-      - run:
-          name: Save Base Image To Cache
-          command: |
-            set -x
-            docker save -o /caches/baseimage.tar baseimage
-      - save_cache:
-          key: v1-{{ .Branch }}-{{ checksum "django/requirements.txt" }}
-          paths:
-            - /caches/baseimage.tar
-      - run:
-          name: Build Webapp Image
-          command: |
-            set -x
-            docker build -t webapp -f docker/webapp/Dockerfile .
-      - run:
-          name: Build Celery Image
-          command: |
-            set -x
-            docker build -t celery -f docker/celery/Dockerfile .
-      - run:
-          name: Build Stack Tester Image
-          command: |
-            set -x
-            docker build -t stacktest -f docker/stacktest/Dockerfile .
-      - run:
-          name: Run Django Unit Tests
-          command: |
-            set -x
-            docker-compose -f docker/docker-compose-unit-test.yaml run unit-test
-            docker-compose -f docker/docker-compose-unit-test.yaml down
-      - run:
-          name: Run Integration Tests Against Local Docker-Compose Stack
-          command: |
-            set -x
-            docker-compose -f docker/docker-compose-local-image-stack.yaml up -d
-            docker run -e SERVICE="localhost:8001" --network container:stockpicker_webapp stacktest ./integration-tests.sh \
-                || \
-                (echo "*** WORKER LOGS:" && echo "$(docker logs stockpicker_worker)" && \
-                echo "*** WEBAPP LOGS:" && echo "$(docker logs stockpicker_webapp)" && exit 1)
-            docker-compose -f docker/docker-compose-local-image-stack.yaml down
-      - run:
-          name: Push Docker Images
-          command: |
-            set -x
-            export PATH="$PATH:$(python -m site --user-base)/bin"
-            $(aws ecr get-login --no-include-email --region us-east-2)
-            IMAGE_TAG=$(echo "$CIRCLE_BRANCH" | sed 's/[^a-zA-Z0-9]/-/g'| sed -e 's/\(.*\)/\L\1/')
-            AWS_REGION=us-east-2
-            ECR_ID=421987441365
-            docker tag webapp $ECR_ID.dkr.ecr.$AWS_REGION.amazonaws.com/stockpicker/webapp:$IMAGE_TAG
-            docker tag celery $ECR_ID.dkr.ecr.$AWS_REGION.amazonaws.com/stockpicker/celery:$IMAGE_TAG
-            docker push $ECR_ID.dkr.ecr.$AWS_REGION.amazonaws.com/stockpicker/webapp:$IMAGE_TAG
-            docker push $ECR_ID.dkr.ecr.$AWS_REGION.amazonaws.com/stockpicker/celery:$IMAGE_TAG
 
-  tagged_image_test:
+  prod_stack_deployment:
     <<: *defaults
     steps:
       - checkout
       - setup_remote_docker:
-          version: 17.03.0-ce
+          version: '20.10.2'
+      # - run:
+      #     name: Build Stack Tester Image
+      #     command: |
+      #       set -x
+      #       docker build -t stacktest -f docker/stacktest/Dockerfile .
       - run:
-          name: Build Stack Tester Image
+          name: Build and Test Production K8s Stack
           command: |
             set -x
-            docker build -t stacktest -f docker/stacktest/Dockerfile .
-      - run:
-          name: Run Integration Tests With Pushed Images
-          command: |
-            set -x
-            export IMAGE_TAG=$(echo "$CIRCLE_BRANCH" | sed 's/[^a-zA-Z0-9]/-/g'| sed -e 's/\(.*\)/\L\1/')
-            export AWS_REGION=us-east-2
-            export ECR_ID=421987441365
-            $(aws ecr get-login --no-include-email --region us-east-2)
-            docker-compose -f docker/docker-compose-tagged-image-stack.yaml up -d
-            docker run -e SERVICE="localhost:8001" --network container:stockpicker_webapp stacktest ./integration-tests.sh \
-                || \
-                (echo "*** WORKER1 LOGS:" && echo "$(docker logs stockpicker_worker1)" && \
-                echo "*** WORKER2 LOGS:" && echo "$(docker logs stockpicker_worker2)" && \
-                echo "*** WEBAPP LOGS:" && echo "$(docker logs stockpicker_webapp)" && \
-                exit 1)
-            docker-compose -f docker/docker-compose-tagged-image-stack.yaml down
+            export IMAGE_TAG=stellarbot
+            echo "IMAGE_TAG: ${IMAGE_TAG}"
+            CLUSTER_REGION='us-east-2'
+            CLUSTER_PATH="kubernetes/${CLUSTER_REGION}/dev"
+            source ${CLUSTER_PATH}/environment.sh
+            export SOURCE_PATH="/src/${CLUSTER_PATH}"
+            echo "SOURCE_PATH: ${SOURCE_PATH}"
+            export STACK_NAME="ci-${TRAVIS_BUILD_NUMBER}-${IMAGE_TAG}"
+            echo "STACK_NAME: ${STACK_NAME}"
+            export CONFIG_PATH='/src/kubernetes/stack-config/test'
+            echo "-- Attempting to pull kubeconfig..."
+            bash bash-scripts/k8s-clusters/pull-kube-config.sh
+            if [ -f "${CLUSTER_PATH}/cluster/kubecfg.yaml" ]; then
+              echo "-- Attempting to validate cluster..."
+              bash bash-scripts/k8s-clusters/validate-cluster.sh
+              echo "-- Deploying K8s app-stack to ${CLUSTER_REGION}..."
+              bash bash-scripts/app-stacks/deploy-k8s-app-stack.sh
+              # this is inelegant, but avoids DNS cacheing problems in test script
+              echo "-- Sleeping 120 seconds..."
+              sleep 120
+              echo "-- Running API functional-tests against K8s app-stack..."
+              docker run --rm SERVICE="${STACK_NAME}.{DOMAIN_NAME}" stacktest ./integration-tests.sh
+              echo "-- Production K8s-stack deployed and functional tests succeeded."
+            else
+              echo "-- Kubernetes cluster not found, so not deploying K8s stack."
+            fi
 
 workflows:
   version: 2
   build-and-deploy:
     jobs:
-      - update_kubernetes_cluster
-      - image_build_test_push
-      - tagged_image_test:
+      - python_linting
+      - image_build_test_push:
+          requires:
+            - python_linting
+      - prod_stack_deployment:
           requires:
             - image_build_test_push
+          # filters:
+          #   branches:
+          #     only:
+          #       - master

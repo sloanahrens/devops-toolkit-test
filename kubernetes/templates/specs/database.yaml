@@ -1,0 +1,42 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: database
+  labels:
+    stack: STACK_NAME
+spec:
+  clusterIP: None
+  ports:
+  - port: 5432
+  selector:
+    type: database
+    service: database
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: database
+  labels:
+    stack: STACK_NAME
+spec:
+  serviceName: database
+  replicas: 1
+  selector:
+    matchLabels:
+      type: database
+      service: database
+  template:
+    metadata:
+      labels:
+        type: database
+        service: database
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+      - name: database
+        image: postgres:alpine
+        imagePullPolicy: IfNotPresent
+        envFrom:
+        - configMapRef:
+            name: stack-config
