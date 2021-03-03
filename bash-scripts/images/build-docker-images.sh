@@ -18,8 +18,8 @@ docker build -t api-gateway -f docker/api-gateway/Dockerfile docker/api-gateway
 # build stack-tester image
 docker build -t stacktest -f docker/stacktest/Dockerfile .
 
-# build ci-executor image
-docker build -t ci-exec -f docker/ci-executor/Dockerfile .
+# # build ci-executor image
+# docker build -t ci-exec -f docker/ci-executor/Dockerfile .
 
-# build devops docker image:
-docker build -t devops -f docker/devops-env/Dockerfile .
+# # build devops docker image:
+# docker build -t devops -f docker/devops-env/Dockerfile .
