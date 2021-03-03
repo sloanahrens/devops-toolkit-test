@@ -68,14 +68,24 @@ jobs:
     steps:
       - checkout
       - setup_remote_docker:
-          version: 17.03.0-ce
+          version: '19.03.14'
       - run:
-          name: Cache Directory
+          name: Build
           command: |
             set -x
             IMAGE_TAG=$(echo "$CIRCLE_BRANCH" | sed 's/[^a-zA-Z0-9]/-/g'| sed -e 's/\(.*\)/\L\1/')
             bash bash-scripts/images/build-docker-images.sh
+      - run:
+          name: Test
+          command: |
+            set -x
+            IMAGE_TAG=$(echo "$CIRCLE_BRANCH" | sed 's/[^a-zA-Z0-9]/-/g'| sed -e 's/\(.*\)/\L\1/')
             bash bash-scripts/testing/docker-compose-stack-test-local.sh
+      - run:
+          name: Push
+          command: |
+            set -x
+            IMAGE_TAG=$(echo "$CIRCLE_BRANCH" | sed 's/[^a-zA-Z0-9]/-/g'| sed -e 's/\(.*\)/\L\1/')
             bash bash-scripts/images/push-docker-images.sh
 
   tagged_image_test:
