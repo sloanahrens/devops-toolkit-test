@@ -1,6 +1,6 @@
 defaults: &defaults
   docker:
-    - image: sloanahrens/devops-toolkit-ci-dev-env:0.0.3
+    - image: sloanahrens/devops-toolkit-ci-dev-env:0.1
 
 version: 2
 jobs:
@@ -68,7 +68,7 @@ jobs:
     steps:
       - checkout
       - setup_remote_docker:
-          version: '19.03.14'
+          version: '20.10.2'
       - run:
           name: Build
           command: |
