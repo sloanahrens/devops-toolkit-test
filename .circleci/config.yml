@@ -1,254 +1,188 @@
-# defaults: &defaults
-#   docker:
-#     - image: sloanahrens/devops-toolkit-ci-dev-env:0.0.3
+defaults: &defaults
+  docker:
+    - image: sloanahrens/devops-toolkit-ci-dev-env:0.0.3
 
-# version: 2
-# jobs:
+version: 2
+jobs:
 
-#   update_kubernetes_cluster:
-#     <<: *defaults
-#     steps:
-#       - checkout
-#       # - run:
-#       #     name: Terraform Apply
-#       #     command: |
-#       #       set -x
-#       #       cd kubernetes/us-east-2/cluster
-#       #       terraform init
-#       #       terraform plan
-#       #       terraform apply --auto-approve
-#       # - run:
-#       #     name: Kops Rolling Update
-#       #     command: |
-#       #       set -x
-#       #       CLUSTER_NAME=devops-toolkit-us-east-2.k8s.local
-#       #       BUCKET_NAME=devops-toolkit-k8s-state-us-east-2
-#       #       cd kubernetes/us-east-2/cluster
-#       #       gpg --decrypt --batch --yes --passphrase $KUBECONFIG_PASSPHRASE kubecfg.yaml.gpg > kubecfg.yaml
-#       #       export KUBECONFIG=$PWD/kubecfg.yaml
-#       #       kops rolling-update cluster --name $CLUSTER_NAME --state s3://$BUCKET_NAME --yes
-#       # - run:
-#       #     name: Kops Validate Cluster
-#       #     command: |
-#       #       set -x
-#       #       sleep 30
-#       #       CLUSTER_NAME=devops-toolkit-us-east-2.k8s.local
-#       #       BUCKET_NAME=devops-toolkit-k8s-state-us-east-2
-#       #       cd kubernetes/us-east-2/cluster
-#       #       gpg --decrypt --batch --yes --passphrase $KUBECONFIG_PASSPHRASE kubecfg.yaml.gpg > kubecfg.yaml
-#       #       export KUBECONFIG=$PWD/kubecfg.yaml
-#       #       kops validate cluster --name $CLUSTER_NAME --state s3://$BUCKET_NAME
-#       # - run:
-#       #     name: Update K8s Dependencies
-#       #     command: |
-#       #       set -x
-#       #       cd kubernetes/us-east-2/cluster
-#       #       gpg --decrypt --batch --yes --passphrase $KUBECONFIG_PASSPHRASE kubecfg.yaml.gpg > kubecfg.yaml
-#       #       export KUBECONFIG=$PWD/kubecfg.yaml
-#       #       cd ../../..
-#       #       kubectl apply -f kubernetes/specs/kubernetes-dashboard.yaml
-#       #       kubectl apply -f kubernetes/specs/external-dns.yaml
-#       #       kubectl apply -f kubernetes/specs/nginx-ingress-controller.yaml
-#       #       kubectl apply -f kubernetes/us-east-2/specs/nginx-ingress-load-balancer.yaml
-#       #       kubectl apply -f kubernetes/us-east-2/specs/aws-efs.yaml
+  update_kubernetes_cluster:
+    <<: *defaults
+    steps:
+      - checkout
+      # - run:
+      #     name: Terraform Apply
+      #     command: |
+      #       set -x
+      #       cd kubernetes/us-east-2/cluster
+      #       terraform init
+      #       terraform plan
+      #       terraform apply --auto-approve
+      # - run:
+      #     name: Kops Rolling Update
+      #     command: |
+      #       set -x
+      #       CLUSTER_NAME=devops-toolkit-us-east-2.k8s.local
+      #       BUCKET_NAME=devops-toolkit-k8s-state-us-east-2
+      #       cd kubernetes/us-east-2/cluster
+      #       gpg --decrypt --batch --yes --passphrase $KUBECONFIG_PASSPHRASE kubecfg.yaml.gpg > kubecfg.yaml
+      #       export KUBECONFIG=$PWD/kubecfg.yaml
+      #       kops rolling-update cluster --name $CLUSTER_NAME --state s3://$BUCKET_NAME --yes
+      # - run:
+      #     name: Kops Validate Cluster
+      #     command: |
+      #       set -x
+      #       sleep 30
+      #       CLUSTER_NAME=devops-toolkit-us-east-2.k8s.local
+      #       BUCKET_NAME=devops-toolkit-k8s-state-us-east-2
+      #       cd kubernetes/us-east-2/cluster
+      #       gpg --decrypt --batch --yes --passphrase $KUBECONFIG_PASSPHRASE kubecfg.yaml.gpg > kubecfg.yaml
+      #       export KUBECONFIG=$PWD/kubecfg.yaml
+      #       kops validate cluster --name $CLUSTER_NAME --state s3://$BUCKET_NAME
+      # - run:
+      #     name: Update K8s Dependencies
+      #     command: |
+      #       set -x
+      #       cd kubernetes/us-east-2/cluster
+      #       gpg --decrypt --batch --yes --passphrase $KUBECONFIG_PASSPHRASE kubecfg.yaml.gpg > kubecfg.yaml
+      #       export KUBECONFIG=$PWD/kubecfg.yaml
+      #       cd ../../..
+      #       kubectl apply -f kubernetes/specs/kubernetes-dashboard.yaml
+      #       kubectl apply -f kubernetes/specs/external-dns.yaml
+      #       kubectl apply -f kubernetes/specs/nginx-ingress-controller.yaml
+      #       kubectl apply -f kubernetes/us-east-2/specs/nginx-ingress-load-balancer.yaml
+      #       kubectl apply -f kubernetes/us-east-2/specs/aws-efs.yaml
 
-#   python_linting:
-#     <<: *defaults
-#     steps:
-#       - checkout
-#       - run:
-#           name: "Pip Install"
-#           command: pip install flake8>=3.7.7 --user circleci
-#       - run:
-#           name: "Python Linting"
-#           command: cd django/stockpicker && python -m flake8 --ignore E501
+  python_linting:
+    <<: *defaults
+    steps:
+      - checkout
+      - run:
+          name: "Pip Install"
+          command: pip install flake8>=3.7.7 --user circleci
+      - run:
+          name: "Python Linting"
+          command: cd django/stockpicker && python -m flake8 --ignore E501
 
-#   image_build_test_push:
-#     <<: *defaults
-#     steps:
-#       - checkout
-#       - setup_remote_docker:
-#           version: 17.03.0-ce
-#       - run:
-#           name: Cache Directory
-#           command: |
-#             set -x
-#             mkdir -p /caches
-#       - restore_cache:
-#           key: v1-{{ .Branch }}-{{ checksum "django/requirements.txt" }}
-#           paths:
-#             - /caches/baseimage.tar
-#       - run:
-#           name: Load Base Image From Cache
-#           command: |
-#             set -x
-#             if [ -e /caches/baseimage.tar ]; then
-#               docker load -i /caches/baseimage.tar
-#             fi
-#       - run:
-#           name: Build Base Image
-#           command: |
-#             set -x
-#             docker build --cache-from=baseimage -t baseimage -f docker/baseimage/Dockerfile .
-#       - run:
-#           name: Save Base Image To Cache
-#           command: |
-#             set -x
-#             docker save -o /caches/baseimage.tar baseimage
-#       - save_cache:
-#           key: v1-{{ .Branch }}-{{ checksum "django/requirements.txt" }}
-#           paths:
-#             - /caches/baseimage.tar
-#       - run:
-#           name: Build Webapp Image
-#           command: |
-#             set -x
-#             docker build -t webapp -f docker/webapp/Dockerfile .
-#       - run:
-#           name: Build Celery Image
-#           command: |
-#             set -x
-#             docker build -t celery -f docker/celery/Dockerfile .
-#       - run:
-#           name: Build Stack Tester Image
-#           command: |
-#             set -x
-#             docker build -t stacktest -f docker/stacktest/Dockerfile .
-#       - run:
-#           name: Run Django Unit Tests
-#           command: |
-#             set -x
-#             docker-compose -f docker/docker-compose-unit-test.yaml run unit-test
-#             docker-compose -f docker/docker-compose-unit-test.yaml down
-#       - run:
-#           name: Run Integration Tests Against Local Docker-Compose Stack
-#           command: |
-#             set -x
-#             docker-compose -f docker/docker-compose-local-image-stack.yaml up -d
-#             docker run -e SERVICE="localhost:8001" --network container:stockpicker_webapp stacktest ./integration-tests.sh \
-#                 || \
-#                 (echo "*** WORKER LOGS:" && echo "$(docker logs stockpicker_worker)" && \
-#                 echo "*** WEBAPP LOGS:" && echo "$(docker logs stockpicker_webapp)" && exit 1)
-#             docker-compose -f docker/docker-compose-local-image-stack.yaml down
-#       - run:
-#           name: Push Docker Images
-#           command: |
-#             set -x
-#             export PATH="$PATH:$(python -m site --user-base)/bin"
-#             $(aws ecr get-login --no-include-email --region us-east-2)
-#             IMAGE_TAG=$(echo "$CIRCLE_BRANCH" | sed 's/[^a-zA-Z0-9]/-/g'| sed -e 's/\(.*\)/\L\1/')
-#             AWS_REGION=us-east-2
-#             ECR_ID=421987441365
-#             docker tag webapp $ECR_ID.dkr.ecr.$AWS_REGION.amazonaws.com/stockpicker/webapp:$IMAGE_TAG
-#             docker tag celery $ECR_ID.dkr.ecr.$AWS_REGION.amazonaws.com/stockpicker/celery:$IMAGE_TAG
-#             docker push $ECR_ID.dkr.ecr.$AWS_REGION.amazonaws.com/stockpicker/webapp:$IMAGE_TAG
-#             docker push $ECR_ID.dkr.ecr.$AWS_REGION.amazonaws.com/stockpicker/celery:$IMAGE_TAG
+  image_build_test_push:
+    <<: *defaults
+    steps:
+      - checkout
+      - setup_remote_docker:
+          version: 17.03.0-ce
+      - run:
+          name: Cache Directory
+          command: |
+            set -x
+            IMAGE_TAG=$(echo "$CIRCLE_BRANCH" | sed 's/[^a-zA-Z0-9]/-/g'| sed -e 's/\(.*\)/\L\1/')
+            bash bash-scripts/images/build-docker-images.sh
+            bash bash-scripts/testing/docker-compose-stack-test-local.sh
+            bash bash-scripts/images/push-docker-images.sh
 
-#   tagged_image_test:
-#     <<: *defaults
-#     steps:
-#       - checkout
-#       - setup_remote_docker:
-#           version: 17.03.0-ce
-#       - run:
-#           name: Build Stack Tester Image
-#           command: |
-#             set -x
-#             docker build -t stacktest -f docker/stacktest/Dockerfile .
-#       - run:
-#           name: Run Integration Tests With Pushed Images
-#           command: |
-#             set -x
-#             export IMAGE_TAG=$(echo "$CIRCLE_BRANCH" | sed 's/[^a-zA-Z0-9]/-/g'| sed -e 's/\(.*\)/\L\1/')
-#             export AWS_REGION=us-east-2
-#             export ECR_ID=421987441365
-#             $(aws ecr get-login --no-include-email --region us-east-2)
-#             docker-compose -f docker/docker-compose-tagged-image-stack.yaml up -d
-#             docker run -e SERVICE="localhost:8001" --network container:stockpicker_webapp stacktest ./integration-tests.sh \
-#                 || \
-#                 (echo "*** WORKER1 LOGS:" && echo "$(docker logs stockpicker_worker1)" && \
-#                 echo "*** WORKER2 LOGS:" && echo "$(docker logs stockpicker_worker2)" && \
-#                 echo "*** WEBAPP LOGS:" && echo "$(docker logs stockpicker_webapp)" && \
-#                 exit 1)
-#             docker-compose -f docker/docker-compose-tagged-image-stack.yaml down
+  tagged_image_test:
+    <<: *defaults
+    steps:
+      - checkout
+      # - setup_remote_docker:
+      #     version: 17.03.0-ce
+      # - run:
+      #     name: Build Stack Tester Image
+      #     command: |
+      #       set -x
+      #       docker build -t stacktest -f docker/stacktest/Dockerfile .
+      # - run:
+      #     name: Run Integration Tests With Pushed Images
+      #     command: |
+      #       set -x
+      #       export IMAGE_TAG=$(echo "$CIRCLE_BRANCH" | sed 's/[^a-zA-Z0-9]/-/g'| sed -e 's/\(.*\)/\L\1/')
+      #       export AWS_REGION=us-east-2
+      #       export ECR_ID=421987441365
+      #       $(aws ecr get-login --no-include-email --region us-east-2)
+      #       docker-compose -f docker/docker-compose-tagged-image-stack.yaml up -d
+      #       docker run -e SERVICE="localhost:8001" --network container:stockpicker_webapp stacktest ./integration-tests.sh \
+      #           || \
+      #           (echo "*** WORKER1 LOGS:" && echo "$(docker logs stockpicker_worker1)" && \
+      #           echo "*** WORKER2 LOGS:" && echo "$(docker logs stockpicker_worker2)" && \
+      #           echo "*** WEBAPP LOGS:" && echo "$(docker logs stockpicker_webapp)" && \
+      #           exit 1)
+      #       docker-compose -f docker/docker-compose-tagged-image-stack.yaml down
 
-#   kubernetes_image_test:
-#     <<: *defaults
-#     steps:
-#       - checkout
-#       - setup_remote_docker:
-#           version: 17.03.0-ce
-#       - run:
-#           name: Build Stack Tester Image
-#           command: |
-#             set -x
-#             docker build -t stacktest -f docker/stacktest/Dockerfile .
-#       - run:
-#           name: Build and Test K8s Stack
-#           command: |
-#             set -x
-#             cd kubernetes/us-east-2/cluster
-#             gpg --decrypt --batch --yes --passphrase $KUBECONFIG_PASSPHRASE kubecfg.yaml.gpg > kubecfg.yaml
-#             export KUBECONFIG=$PWD/kubecfg.yaml
-#             cd ../../..
-#             IMAGE_TAG=$(echo "$CIRCLE_BRANCH" | sed 's/[^a-zA-Z0-9]/-/g'| sed -e 's/\(.*\)/\L\1/')
-#             STACK_NAME=ci-test-stockpicker-$CIRCLE_BUILD_NUM
-#             ENV_FILE=test-stack.yaml
-#             ./ci_scripts/delete_k8s_app_stack.sh $STACK_NAME
-#             sleep 10
-#             ./ci_scripts/deploy_k8s_app_stack.sh $STACK_NAME $IMAGE_TAG $ENV_FILE 1 2
-#             sleep 240 # hack for now
-#             ./ci_scripts/test_k8s_app_stack.sh $STACK_NAME
-#             ./ci_scripts/delete_k8s_app_stack.sh $STACK_NAME
+  kubernetes_image_test:
+    <<: *defaults
+    steps:
+      - checkout
+      # - setup_remote_docker:
+      #     version: 17.03.0-ce
+      # - run:
+      #     name: Build Stack Tester Image
+      #     command: |
+      #       set -x
+      #       docker build -t stacktest -f docker/stacktest/Dockerfile .
+      # - run:
+      #     name: Build and Test K8s Stack
+      #     command: |
+      #       set -x
+      #       cd kubernetes/us-east-2/cluster
+      #       gpg --decrypt --batch --yes --passphrase $KUBECONFIG_PASSPHRASE kubecfg.yaml.gpg > kubecfg.yaml
+      #       export KUBECONFIG=$PWD/kubecfg.yaml
+      #       cd ../../..
+      #       IMAGE_TAG=$(echo "$CIRCLE_BRANCH" | sed 's/[^a-zA-Z0-9]/-/g'| sed -e 's/\(.*\)/\L\1/')
+      #       STACK_NAME=ci-test-stockpicker-$CIRCLE_BUILD_NUM
+      #       ENV_FILE=test-stack.yaml
+      #       ./ci_scripts/delete_k8s_app_stack.sh $STACK_NAME
+      #       sleep 10
+      #       ./ci_scripts/deploy_k8s_app_stack.sh $STACK_NAME $IMAGE_TAG $ENV_FILE 1 2
+      #       sleep 240 # hack for now
+      #       ./ci_scripts/test_k8s_app_stack.sh $STACK_NAME
+      #       ./ci_scripts/delete_k8s_app_stack.sh $STACK_NAME
 
-#   prod_stack_deployment:
-#     <<: *defaults
-#     steps:
-#       - checkout
-#       - setup_remote_docker:
-#           version: 17.03.0-ce
-#       - run:
-#           name: Build Stack Tester Image
-#           command: |
-#             set -x
-#             docker build -t stacktest -f docker/stacktest/Dockerfile .
-#       - run:
-#           name: Build and Test Production K8s Stack
-#           command: |
-#             set -x
-#             cd kubernetes/us-east-2/cluster
-#             gpg --decrypt --batch --yes --passphrase $KUBECONFIG_PASSPHRASE kubecfg.yaml.gpg > kubecfg.yaml
-#             export KUBECONFIG=$PWD/kubecfg.yaml
-#             cd ../../..
-#             IMAGE_TAG=master
-#             STACK_NAME=stockpicker
-#             ENV_FILE=test-stack.yaml
-#             ./ci_scripts/delete_k8s_app_stack.sh $STACK_NAME
-#             sleep 10
-#             ./ci_scripts/deploy_k8s_app_stack.sh $STACK_NAME $IMAGE_TAG $ENV_FILE 1 2
-#             sleep 240 # hack for now
-#             ./ci_scripts/test_k8s_app_stack.sh $STACK_NAME
+  prod_stack_deployment:
+    <<: *defaults
+    steps:
+      - checkout
+      # - setup_remote_docker:
+      #     version: 17.03.0-ce
+      # - run:
+      #     name: Build Stack Tester Image
+      #     command: |
+      #       set -x
+      #       docker build -t stacktest -f docker/stacktest/Dockerfile .
+      # - run:
+      #     name: Build and Test Production K8s Stack
+      #     command: |
+      #       set -x
+      #       cd kubernetes/us-east-2/cluster
+      #       gpg --decrypt --batch --yes --passphrase $KUBECONFIG_PASSPHRASE kubecfg.yaml.gpg > kubecfg.yaml
+      #       export KUBECONFIG=$PWD/kubecfg.yaml
+      #       cd ../../..
+      #       IMAGE_TAG=master
+      #       STACK_NAME=stockpicker
+      #       ENV_FILE=test-stack.yaml
+      #       ./ci_scripts/delete_k8s_app_stack.sh $STACK_NAME
+      #       sleep 10
+      #       ./ci_scripts/deploy_k8s_app_stack.sh $STACK_NAME $IMAGE_TAG $ENV_FILE 1 2
+      #       sleep 240 # hack for now
+      #       ./ci_scripts/test_k8s_app_stack.sh $STACK_NAME
 
-# workflows:
-#   version: 2
-#   build-and-deploy:
-#     jobs:
-#       - update_kubernetes_cluster
-#       - python_linting
-#       - image_build_test_push:
-#           requires:
-#             - python_linting
-#       - tagged_image_test:
-#           requires:
-#             - image_build_test_push
-#       - kubernetes_image_test:
-#           requires:
-#             - update_kubernetes_cluster
-#             - tagged_image_test
-#       - prod_stack_deployment:
-#           requires:
-#             - kubernetes_image_test
-#           filters:
-#             branches:
-#               only:
-#                 - master
+workflows:
+  version: 2
+  build-and-deploy:
+    jobs:
+      # - update_kubernetes_cluster
+      # - python_linting
+      - image_build_test_push
+          # requires:
+          #   - python_linting
+      # - tagged_image_test:
+      #     requires:
+      #       - image_build_test_push
+      # - kubernetes_image_test:
+      #     requires:
+      #       - update_kubernetes_cluster
+      #       - tagged_image_test
+      # - prod_stack_deployment:
+      #     requires:
+      #       - kubernetes_image_test
+      #     filters:
+      #       branches:
+      #         only:
+      #           - master

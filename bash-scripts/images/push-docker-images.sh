@@ -2,7 +2,7 @@
 
 set -e
 
-source /src/bash-scripts/devops-functions.sh
+source bash-scripts/devops-functions.sh
 validate_aws_config
 source_cluster_env
 

@@ -8,7 +8,7 @@ services:
     tty: true
     container_name: local_dev_api_gateway
     volumes:
-      - ../docker/api-gateway-image/krakend.json:/etc/krakend/krakend.json
+      - ../docker/api-gateway/krakend.json:/etc/krakend/krakend.json
     command: >
       run -d --config /etc/krakend/krakend.json
     ports:
@@ -31,64 +31,61 @@ services:
     image: baseimage
     restart: unless-stopped
     tty: true
-    container_name: local_dev_baseimage
+    container_name: local_dev_webapp
     env_file:
      - ../container_environments/test-stack.yaml
     volumes:
-      - ../django/stellarbot:/src/stellarbot
-    working_dir: /src/stellarbot
+      - ../django/stellarbot:/src
     ports:
       - "8000:8000"
     links:
       - database
     command: bash -c "python manage.py migrate && python manage.py create_admin_user && python manage.py runserver 0.0.0.0:8000"
 
-  # queue:
-  #   image: rabbitmq:3.6
-  #   container_name: local_dev_rabbitmq
-  #   env_file:
-  #    - ../container_environments/test-stack.yaml
+  # celery worker
+  worker:
+    image: baseimage
+    container_name: local_dev_celery_worker
+    env_file:
+     - ../container_environments/test-stack.yaml
+    environment:
+      C_FORCE_ROOT: "yes"
+    volumes:
+      - ../django/stellarbot:/src
+    links:
+      - database
+      - queue
+    command: bash -c "celery --app=stellarbot.celery worker -O fair -c 1 --loglevel=info"
 
-  # redis:
-  #   image: redis
-  #   container_name: local_dev_redis
-  #   env_file:
-  #    - ../container_environments/test-stack.yaml
+  # celery beat (scheduled tasks)
+  beat:
+    image: baseimage
+    container_name: local_dev_celery_beat
+    env_file:
+     - ../container_environments/test-stack.yaml
+    environment:
+      C_FORCE_ROOT: "yes"
+    volumes:
+      - ../django/stellarbot:/src
+    links:
+      - database
+      - queue
+    command: bash -c "sleep 30 && celery --app=stellarbot.celery beat --loglevel=info"
 
-  # # celery worker
-  # worker:
-  #   image: baseimage
-  #   container_name: local_dev_celery_worker
-  #   env_file:
-  #    - ../container_environments/test-stack.yaml
-  #   environment:
-  #     C_FORCE_ROOT: "yes"
-  #   working_dir: /src/django/stellarbot
-  #   volumes:
-  #     - ../:/src
-  #   links:
-  #     - database
-  #     - queue
-  #   command: bash -c "celery --app=stellarbot.celery worker -O fair -c 1 --loglevel=info"
+  queue:
+    image: rabbitmq:alpine
+    container_name: local_dev_rabbitmq
+    env_file:
+     - ../container_environments/test-stack.yaml
 
-  # # celery beat (scheduled tasks)
-  # beat:
-  #   image: baseimage
-  #   container_name: local_dev_celery_beat
-  #   env_file:
-  #    - ../container_environments/test-stack.yaml
-  #   environment:
-  #     C_FORCE_ROOT: "yes"
-  #   working_dir: /src/django/stellarbot
-  #   volumes:
-  #     - ../:/src
-  #   links:
-  #     - database
-  #     - queue
-  #   command: bash -c "sleep 30 && celery --app=stellarbot.celery beat --loglevel=info"
+  redis:
+    image: redis:alpine
+    container_name: local_dev_redis
+    env_file:
+     - ../container_environments/test-stack.yaml
 
   database:
-    image: postgres:9.4
+    image: postgres:alpine
     restart: unless-stopped
     tty: true
     container_name: local_dev_database

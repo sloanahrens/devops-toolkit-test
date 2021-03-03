@@ -36,3 +36,5 @@ wait_for_and_test_endpoint "$SERVICE/health/app/"
 wait_for_and_test_endpoint "$SERVICE/health/database/"
 wait_for_and_test_endpoint "$SERVICE/health/celery/"
 wait_for_and_test_endpoint "$SERVICE/health/data/"
+
+echo "Integration tests passed!"

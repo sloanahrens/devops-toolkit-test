@@ -57,19 +57,19 @@ services:
     command: bash -c "export C_FORCE_ROOT=true && sleep 20 && celery --app=stellarbot.celery beat --loglevel=info"
 
   queue:
-    image: rabbitmq:3.6
+    image: rabbitmq:alpine
     container_name: local_dev_rabbitmq
     env_file:
      - ../container_environments/test-stack.yaml
 
   redis:
-    image: redis
+    image: redis:alpine
     container_name: local_dev_redis
     env_file:
      - ../container_environments/test-stack.yaml
 
   database:
-    image: postgres:9.4
+    image: postgres:alpine
     restart: unless-stopped
     tty: true
     container_name: local_prod_postgres
