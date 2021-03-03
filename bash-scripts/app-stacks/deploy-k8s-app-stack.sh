@@ -107,6 +107,7 @@ cat ${SPEC_TEMPLATES_PATH}/beat.yaml \
 cat ${SPEC_TEMPLATES_PATH}/api-gateway.yaml \
   | sed -e  "s@ECR_ID@${ECR_ID}@g" \
   | sed -e  "s@ECR_REGION@${ECR_REGION}@g" \
+  | sed -e  "s@DOMAIN_NAME@${DOMAIN_NAME}@g" \
   | sed -e  "s@STACK_NAME@${STACK_NAME}@g" \
   | sed -e  "s@IMAGE_TAG@${IMAGE_TAG}@g" \
   | sed -e  "s@API_GATEWAY_REPLICAS@${API_GATEWAY_REPLICAS}@g" \

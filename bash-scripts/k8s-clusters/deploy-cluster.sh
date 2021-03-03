@@ -81,11 +81,19 @@ function create_cluster {
 
     cd ${SOURCE_PATH}/cluster
 
+    # need to figure out why this is necessary; it removes the load-balancer from the master ASG for some reason
     kops update cluster ${CLUSTER_NAME} --state s3://${BUCKET_NAME} --target=terraform --out=.
 
+    # running terraform screws up the cluster because the previous step removes the load-balancer
     # run_cluster_terraform
+    # this is only here to keep the code in source-control matching the deployed resources, since kops update overwrites the IAM policy doc
+    cat ${ROOT_PATH}/kubernetes/templates/node_iam_policy.txt \
+      | sed -e "s@R53_HOSTED_ZONE@${R53_HOSTED_ZONE}@g" \
+      | sed -e "s@BUCKET_NAME@${BUCKET_NAME}@g" \
+      | sed -e "s@CLUSTER_NAME@${CLUSTER_NAME}@g" \
+      > ${SOURCE_PATH}/cluster/data/aws_iam_role_policy_nodes.${CLUSTER_NAME}_policy
 
-    # sleep 5
+    sleep 5
 
     kops rolling-update cluster --name ${CLUSTER_NAME} --state s3://${BUCKET_NAME} --cloudonly --force --yes
 
@@ -126,13 +134,6 @@ function wait_for_cluster_health {
 
 function setup_k8s_scaffolding {
 
-    # # create kubernetes dashboard:
-    # # kubectl apply -f kubernetes/specs/kubernetes-dashboard.yaml
-    # kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.0.0/aio/deploy/recommended.yaml
-
-    # create external-dns stuff:
-    kubectl apply -f ${ROOT_PATH}/kubernetes/specs/external-dns.yaml
-
     # create Nginx Ingress controller:
     kubectl apply -f ${ROOT_PATH}/kubernetes/specs/nginx-ingress-controller.yaml
 
@@ -141,10 +142,20 @@ function setup_k8s_scaffolding {
       | sed -e  "s@SSL_CERT_ARN@${SSL_CERT_ARN}@g" \
       | kubectl apply -f -
 
+    # create external-dns stuff:
+    kubectl apply -f ${ROOT_PATH}/kubernetes/specs/external-dns.yaml
+    # cat ${ROOT_PATH}/kubernetes/templates/specs/external-dns.yaml \
+    #   | sed -e  "s@DOMAIN_NAME@${DOMAIN_NAME}@g" \
+    #   | kubectl apply -f -
+
     # # create cluster auto-scaler
     # cat ${ROOT_PATH}/kubernetes/specs/cluster-autoscaler-autodiscover.yaml \
     #   | sed -e  "s@CLUSTER_NAME@${CLUSTER_NAME}@g" \
     #   | kubectl apply -f -
+
+    # # create kubernetes dashboard:
+    # # kubectl apply -f kubernetes/specs/kubernetes-dashboard.yaml
+    # kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.0.0/aio/deploy/recommended.yaml
 }
 #####
 

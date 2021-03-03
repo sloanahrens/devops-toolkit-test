@@ -41,7 +41,7 @@ spec:
         - configMapRef:
             name: stack-config
 ---
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1beta1
 kind: Ingress
 metadata:
   name: api-gateway
@@ -54,7 +54,7 @@ metadata:
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
 spec:
   rules:
-  - host: STACK_NAME.DOMAIN_NAME
+  - host: STACK_NAME.sloanahrens.com
     http:
       paths:
       - backend:

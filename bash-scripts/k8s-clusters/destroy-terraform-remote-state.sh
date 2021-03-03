@@ -4,7 +4,7 @@
 source ${ROOT_PATH}/bash-scripts/devops-functions.sh
 run_setup
 
-bucket="emory-${CLUSTER_TYPE}-terraform-state-storage-${REGION}"
+bucket="stellarbot-${CLUSTER_TYPE}-terraform-state-storage-${REGION}"
 
 set -e
 

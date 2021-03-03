@@ -61,6 +61,78 @@
       "Resource": [
         "*"
       ]
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "route53:ListResourceRecordSets",
+        "route53:GetHostedZone"
+      ],
+      "Resource": [
+        "arn:aws:route53:::hostedzone/Z1CDZE44WDSMXZ"
+      ]
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "route53:ChangeResourceRecordSets"
+      ],
+      "Resource": [
+        "arn:aws:route53:::hostedzone/Z1CDZE44WDSMXZ"
+      ]
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "route53:GetChange"
+      ],
+      "Resource": [
+        "arn:aws:route53:::change/Z1CDZE44WDSMXZ"
+      ]
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "route53:ListHostedZones"
+      ],
+      "Resource": [
+        "*"
+      ]
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "elasticfilesystem:DescribeFileSystems",
+        "elasticfilesystem:CreateFileSystem",
+        "elasticfilesystem:CreateTags",
+        "elasticfilesystem:DescribeMountTargets",
+        "elasticfilesystem:CreateMountTarget",
+        "ec2:DescribeSubnets",
+        "ec2:DescribeNetworkInterfaces",
+        "ec2:CreateNetworkInterface"
+      ],
+     "Resource": "*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "pricing:GetProducts"
+      ],
+      "Resource": [
+        "*"
+      ]
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+          "autoscaling:DescribeAutoScalingGroups",
+          "autoscaling:DescribeAutoScalingInstances",
+          "autoscaling:DescribeLaunchConfigurations",
+          "autoscaling:SetDesiredCapacity",
+          "autoscaling:TerminateInstanceInAutoScalingGroup",
+          "autoscaling:DescribeTags"
+      ],
+      "Resource": ["*"]
     }
   ]
 }

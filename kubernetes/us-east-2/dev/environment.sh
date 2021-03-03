@@ -17,6 +17,6 @@ export BUCKET_NAME=stellarbot-${CLUSTER_TYPE}-k8s-state-${REGION}
 export MASTER_ZONES=us-east-2a
 export NODE_ZONES=${MASTER_ZONES}
 export MASTER_SIZE=r5.xlarge
-export NODE_SIZE=t2.medium
+export NODE_SIZE=r5.large
 export MASTER_COUNT=1
 export NODE_COUNT=1
