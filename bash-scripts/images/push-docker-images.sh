@@ -2,10 +2,6 @@
 
 set -e
 
-source bash-scripts/devops-functions.sh
-validate_aws_config
-source_cluster_env
-
 $(aws ecr get-login --no-include-email --region ${ECR_REGION})
 
 docker tag ui ${ECR_ID}.dkr.ecr.${ECR_REGION}.amazonaws.com/stellarbot/ui:${IMAGE_TAG}

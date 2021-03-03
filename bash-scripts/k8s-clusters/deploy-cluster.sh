@@ -153,6 +153,9 @@ function setup_k8s_scaffolding {
 source ${ROOT_PATH}/bash-scripts/devops-functions.sh
 run_setup
 
+mkdir -p ${SOURCE_PATH}/cluster
+mkdir -p ${SOURCE_PATH}/remote-state
+
 # avoid simultaneous cluster updates
 set_cluster_updating_status
 
