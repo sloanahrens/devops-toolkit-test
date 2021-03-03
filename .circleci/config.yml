@@ -94,7 +94,7 @@ workflows:
             - python_linting
       - prod_stack_deployment:
           requires:
-            - kubernetes_image_test
+            - image_build_test_push
           filters:
             branches:
               only:
