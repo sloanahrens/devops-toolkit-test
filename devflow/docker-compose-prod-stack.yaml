@@ -30,6 +30,7 @@ services:
     links:
       - database
       - queue
+      - redis
     command: /src/initialize-webapp.sh
 
   worker:
@@ -42,6 +43,7 @@ services:
     links:
       - database
       - queue
+      - redis
     command: bash -c "export C_FORCE_ROOT=true && celery --app=stellarbot.celery worker -O fair -c 1 --loglevel=info"
 
   beat:
@@ -54,6 +56,7 @@ services:
     links:
       - database
       - queue
+      - redis
     command: bash -c "export C_FORCE_ROOT=true && sleep 20 && celery --app=stellarbot.celery beat --loglevel=info"
 
   queue:

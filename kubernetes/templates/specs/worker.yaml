@@ -21,15 +21,10 @@ spec:
       terminationGracePeriodSeconds: 10
       containers:
       - name: worker
-        image: ECR_ID.dkr.ecr.ECR_REGION.amazonaws.com/stellarbot/celery:IMAGE_TAG
+        image: ECR_ID.dkr.ecr.ECR_REGION.amazonaws.com/stellarbot/django:IMAGE_TAG
         imagePullPolicy: Always
-        resources:
-          requests:
-            memory: 256Mi
-          limits:
-            memory: 512Mi
         envFrom:
         - configMapRef:
-            name: webapp-config
+            name: stack-config
         command: ["/bin/bash"]
-        args: ["-c", "celery --app=stellarbot.celery worker -O fair -c 1 --loglevel=info"]
+        args: ["-c", "export C_FORCE_ROOT=true && celery --app=stellarbot.celery worker -O fair -c 1 --loglevel=info"]

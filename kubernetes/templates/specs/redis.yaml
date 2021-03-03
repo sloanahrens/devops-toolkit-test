@@ -2,40 +2,40 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: database
+  name: redis
   labels:
     stack: STACK_NAME
 spec:
   clusterIP: None
   ports:
-  - port: 5432
+  - port: 6379
   selector:
-    type: database
-    service: database
+    type: redis
+    service: redis
 ---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: database
+  name: redis
   labels:
     stack: STACK_NAME
 spec:
-  serviceName: database
+  serviceName: redis
   replicas: 1
   selector:
     matchLabels:
-      type: database
-      service: database
+      type: redis
+      service: redis
   template:
     metadata:
       labels:
-        type: database
-        service: database
+        type: redis
+        service: redis
     spec:
       terminationGracePeriodSeconds: 10
       containers:
-      - name: database
-        image: postgres:alpine
+      - name: redis
+        image: redis:alpine
         imagePullPolicy: IfNotPresent
         envFrom:
         - configMapRef:

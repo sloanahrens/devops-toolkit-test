@@ -310,7 +310,7 @@ resource "aws_launch_configuration" "nodes-stellarbot-dev-us-east-2-k8s-local" {
   enable_monitoring           = false
   iam_instance_profile        = aws_iam_instance_profile.nodes-stellarbot-dev-us-east-2-k8s-local.id
   image_id                    = "ami-0b287e7832eb862f8"
-  instance_type               = "t2.small"
+  instance_type               = "t2.medium"
   key_name                    = aws_key_pair.kubernetes-stellarbot-dev-us-east-2-k8s-local-3c696872dda0d8c74868f68979ea2f3d.id
   lifecycle {
     create_before_destroy = true

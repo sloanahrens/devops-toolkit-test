@@ -5,8 +5,7 @@ set -e
 # default to one replica for each microservice
 UI_REPLICAS=${UI_REPLICAS-'1'}
 WEBAPP_REPLICAS=${WEBAPP_REPLICAS-'1'}
-WEBAPP_REPLICAS=${WORKER_REPLICAS-'1'}
-WEBAPP_REPLICAS=${BEAT_REPLICAS-'1'}
+WORKER_REPLICAS=${WORKER_REPLICAS-'1'}
 API_GATEWAY_REPLICAS=${API_GATEWAY_REPLICAS-'1'}
 
 CONFIG_PATH='/src/kubernetes/stack-config/test'
@@ -19,6 +18,7 @@ echo "CONFIG_PATH: ${CONFIG_PATH}"
 
 echo "UI_REPLICAS: ${UI_REPLICAS}"
 echo "WEBAPP_REPLICAS: ${WEBAPP_REPLICAS}"
+echo "WORKER_REPLICAS: ${WORKER_REPLICAS}"
 echo "API_GATEWAY_REPLICAS: ${API_GATEWAY_REPLICAS}"
 
 
@@ -45,29 +45,8 @@ cat ${SPEC_TEMPLATES_PATH}/namespace.yaml \
   | kubectl apply -f -
 
 
-# deploy database-config
-cat ${CONFIG_PATH}/database-config.yaml \
-  | sed -e  "s@STACKNAME@${STACK_NAME}@g" \
-  | sed -e  "s@IMAGETAG@${IMAGE_TAG}@g" \
-  | sed -e  "s@CONFIGPATH@${CONFIG_PATH}@g" \
-  | kubectl -n ${STACK_NAME} apply -f -
-
-# deploy ui-config
-cat ${CONFIG_PATH}/ui-config.yaml \
-  | sed -e  "s@STACKNAME@${STACK_NAME}@g" \
-  | sed -e  "s@IMAGETAG@${IMAGE_TAG}@g" \
-  | sed -e  "s@CONFIGPATH@${CONFIG_PATH}@g" \
-  | kubectl -n ${STACK_NAME} apply -f -
-
-# deploy webapp-config
-cat ${CONFIG_PATH}/webapp-config.yaml \
-  | sed -e  "s@STACKNAME@${STACK_NAME}@g" \
-  | sed -e  "s@IMAGETAG@${IMAGE_TAG}@g" \
-  | sed -e  "s@CONFIGPATH@${CONFIG_PATH}@g" \
-  | kubectl -n ${STACK_NAME} apply -f -
-
-# deploy api-gateway-config
-cat ${CONFIG_PATH}/api-gateway-config.yaml \
+# deploy stack-config
+cat ${CONFIG_PATH}/stack-config.yaml \
   | sed -e  "s@STACKNAME@${STACK_NAME}@g" \
   | sed -e  "s@IMAGETAG@${IMAGE_TAG}@g" \
   | sed -e  "s@CONFIGPATH@${CONFIG_PATH}@g" \
@@ -76,6 +55,16 @@ cat ${CONFIG_PATH}/api-gateway-config.yaml \
 
 # deploy database
 cat ${SPEC_TEMPLATES_PATH}/database.yaml \
+  | sed -e  "s@STACK_NAME@${STACK_NAME}@g" \
+  | kubectl -n ${STACK_NAME} apply -f -
+
+# deploy queue
+cat ${SPEC_TEMPLATES_PATH}/queue.yaml \
+  | sed -e  "s@STACK_NAME@${STACK_NAME}@g" \
+  | kubectl -n ${STACK_NAME} apply -f -
+
+# deploy redis
+cat ${SPEC_TEMPLATES_PATH}/redis.yaml \
   | sed -e  "s@STACK_NAME@${STACK_NAME}@g" \
   | kubectl -n ${STACK_NAME} apply -f -
 
@@ -103,7 +92,7 @@ cat ${SPEC_TEMPLATES_PATH}/worker.yaml \
   | sed -e  "s@ECR_REGION@${ECR_REGION}@g" \
   | sed -e  "s@STACK_NAME@${STACK_NAME}@g" \
   | sed -e  "s@IMAGE_TAG@${IMAGE_TAG}@g" \
-  | sed -e  "s@WEBAPP_REPLICAS@${WORKER_REPLICAS}@g" \
+  | sed -e  "s@WORKER_REPLICAS@${WORKER_REPLICAS}@g" \
   | kubectl -n ${STACK_NAME} apply -f -
 
 # deploy beat
@@ -112,7 +101,6 @@ cat ${SPEC_TEMPLATES_PATH}/beat.yaml \
   | sed -e  "s@ECR_REGION@${ECR_REGION}@g" \
   | sed -e  "s@STACK_NAME@${STACK_NAME}@g" \
   | sed -e  "s@IMAGE_TAG@${IMAGE_TAG}@g" \
-  | sed -e  "s@WEBAPP_REPLICAS@${BEAT_REPLICAS}@g" \
   | kubectl -n ${STACK_NAME} apply -f -
 
 # deploy api-gateway

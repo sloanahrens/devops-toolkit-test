@@ -39,7 +39,7 @@ spec:
         imagePullPolicy: Always
         envFrom:
         - configMapRef:
-            name: database-config
+            name: stack-config
 ---
 apiVersion: extensions/v1beta1
 kind: Ingress
@@ -54,7 +54,7 @@ metadata:
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
 spec:
   rules:
-  - host: STACK_NAME.stellarbotdev.com
+  - host: STACK_NAME.DOMAIN_NAME
     http:
       paths:
       - backend:

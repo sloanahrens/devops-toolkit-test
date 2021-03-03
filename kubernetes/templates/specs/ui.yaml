@@ -48,4 +48,4 @@ spec:
             memory: 512Mi
         envFrom:
         - configMapRef:
-            name: ui-config
+            name: stack-config

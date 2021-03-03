@@ -39,13 +39,6 @@ jobs:
           command: |
             set -x
             IMAGE_TAG=$(echo "$CIRCLE_BRANCH" | sed 's/[^a-zA-Z0-9]/-/g'| sed -e 's/\(.*\)/\L\1/')
-            docker run \
-            -v /var/run/docker.sock:/var/run/docker.sock \
-            -v $PWD:/src \
-            -e AWS_ACCESS_KEY_ID \
-            -e AWS_SECRET_ACCESS_KEY \
-            -e IMAGE_TAG \
-            devops \
             bash /src/bash-scripts/images/push-docker-images.sh
       - run:
           name: K8s Tests

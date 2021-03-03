@@ -39,13 +39,23 @@ spec:
       terminationGracePeriodSeconds: 10
       containers:
       - name: webapp
-        image: ECR_ID.dkr.ecr.ECR_REGION.amazonaws.com/stellarbot/webapp:IMAGE_TAG
+        image: ECR_ID.dkr.ecr.ECR_REGION.amazonaws.com/stellarbot/django:IMAGE_TAG
         imagePullPolicy: Always
-        resources:
-          requests:
-            memory: 256Mi
-          limits:
-            memory: 512Mi
         envFrom:
         - configMapRef:
-            name: webapp-config
+            name: stack-config
+        command: ["/src/initialize-webapp.sh"]
+        # readinessProbe:
+        #   httpGet:
+        #     path: /health/database/
+        #     port: 8000
+        #   initialDelaySeconds: 20
+        #   timeoutSeconds: 1
+        #   periodSeconds: 10
+        # readinessProbe:
+        #   httpGet:
+        #     path: /health/celery/
+        #     port: 8000
+        #   initialDelaySeconds: 20
+        #   timeoutSeconds: 1
+        #   periodSeconds: 10
