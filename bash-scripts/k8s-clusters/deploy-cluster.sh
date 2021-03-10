@@ -78,6 +78,11 @@ function create_cluster {
     sleep 5
 
     kops export kubecfg --name ${CLUSTER_NAME} --state s3://${BUCKET_NAME}
+}
+
+function update_cluster {
+
+    ## DANGER this needs work
 
     cd ${SOURCE_PATH}/cluster
 
@@ -96,27 +101,8 @@ function create_cluster {
     sleep 5
 
     kops rolling-update cluster --name ${CLUSTER_NAME} --state s3://${BUCKET_NAME} --cloudonly --force --yes
-
-    # push kubeconfig to private s3 bucket
-    aws s3 cp kubecfg.yaml s3://$BUCKET_NAME/kubecfg.yaml
-}
-
-function update_cluster {
-
-    cd ${SOURCE_PATH}/cluster
-
-    kops update cluster ${CLUSTER_NAME} --state s3://${BUCKET_NAME} --target=terraform --out=.
-
-    run_cluster_terraform
-
-    sleep 5
-
-    kops rolling-update cluster --name ${CLUSTER_NAME} --state s3://${BUCKET_NAME} --cloudonly --force --yes
     # kops rolling-update cluster --name ${CLUSTER_NAME} --state s3://${BUCKET_NAME} --force --yes
     # kops rolling-update cluster --name ${CLUSTER_NAME} --state s3://${BUCKET_NAME} --yes
-
-    # push kubeconfig to private s3 bucket
-    aws s3 cp kubecfg.yaml s3://$BUCKET_NAME/kubecfg.yaml
 }
 
 function get_cluster_info_json {
@@ -137,16 +123,19 @@ function setup_k8s_scaffolding {
     # create Nginx Ingress controller:
     kubectl apply -f ${ROOT_PATH}/kubernetes/specs/nginx-ingress-controller.yaml
 
+    mkdir -p ${SOURCE_PATH}/cluster/specs
+
     # create nginx (region-specific) load-balancer
     cat ${ROOT_PATH}/kubernetes/templates/specs/nginx-ingress-load-balancer.yaml \
       | sed -e  "s@SSL_CERT_ARN@${SSL_CERT_ARN}@g" \
-      | kubectl apply -f -
+      > ${SOURCE_PATH}/specs/nginx-ingress-load-balancer.yaml
+    kubectl apply -f ${SOURCE_PATH}/specs/nginx-ingress-load-balancer.yaml
 
     # create external-dns stuff:
-    kubectl apply -f ${ROOT_PATH}/kubernetes/specs/external-dns.yaml
-    # cat ${ROOT_PATH}/kubernetes/templates/specs/external-dns.yaml \
-    #   | sed -e  "s@DOMAIN_NAME@${DOMAIN_NAME}@g" \
-    #   | kubectl apply -f -
+    cat ${ROOT_PATH}/kubernetes/templates/specs/external-dns.yaml \
+      | sed -e  "s@DOMAIN_NAME@${DOMAIN_NAME}@g" \
+      > ${SOURCE_PATH}/specs/external-dns.yaml
+    kubectl apply -f ${SOURCE_PATH}/specs/external-dns.yaml
 
     # # create cluster auto-scaler
     # cat ${ROOT_PATH}/kubernetes/specs/cluster-autoscaler-autodiscover.yaml \
@@ -161,12 +150,19 @@ function setup_k8s_scaffolding {
 
 
 # setup
+echo "Running setup"
 source ${ROOT_PATH}/bash-scripts/devops-functions.sh
 run_setup
 
 mkdir -p ${SOURCE_PATH}/cluster
 mkdir -p ${SOURCE_PATH}/remote-state
 
+if [ "$1" == "force" ]; then
+    echo "** Forcing cluster update **"
+    remove_cluster_updating_status
+fi
+
+echo "Updating cluster status"
 # avoid simultaneous cluster updates
 set_cluster_updating_status
 
@@ -180,15 +176,17 @@ pull_kube_config
 
 # use kubcfg if found, otherwise create cluster
 if test -f "${KUBECONFIG}"; then
-    # echo "** Kube-config file ${KUBECONFIG} found. Updating..."
-    # update_cluster
-    echo "** Kube-config file ${KUBECONFIG} found. Exiting."
+    echo "** Kube-config file ${KUBECONFIG} found. Updating..."
 else
     echo "** Kube-config file ${KUBECONFIG} not found! Creating cluster..."
     create_cluster
-    wait_for_cluster_health
 fi
+update_cluster # this needs work
+wait_for_cluster_health
 
 setup_k8s_scaffolding
+
+# push kubeconfig to private s3 bucket
+# aws s3 cp kubecfg.yaml s3://$BUCKET_NAME/kubecfg.yaml
 
 remove_cluster_updating_status

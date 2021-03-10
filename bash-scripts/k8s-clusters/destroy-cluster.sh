@@ -4,6 +4,11 @@
 source ${ROOT_PATH}/bash-scripts/devops-functions.sh
 run_setup
 
+if [ "$1" == "force" ]; then
+    echo "** Forcing cluster update **"
+    remove_cluster_updating_status
+fi
+
 set_cluster_updating_status
 
 pull_kube_config

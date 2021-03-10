@@ -12,3 +12,4 @@ coverage.out
 telepresence.log
 kubernetes
 notes.sh
+legacy-aws

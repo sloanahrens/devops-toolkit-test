@@ -41,6 +41,4 @@ RUN apt-key adv --keyserver keyserver.ubuntu.com --recv 5DE6FD698AD6FDD2 \
     && apt-get update \
     && apt-get install -y krakend 
 
-RUN echo 'source <(kubectl completion bash) && echo "kubectl completion loaded."' > /root/.bashrc \
-    && echo 'source /src/bash-scripts/devops-functions.sh && source_cluster_env && show_cluster_env' >> /root/.bashrc
-
+RUN echo 'if test -f /src/bash-scripts/devops-functions.sh; then source /src/bash-scripts/devops-functions.sh && source_cluster_env && show_cluster_env; fi' >> /root/.bashrc

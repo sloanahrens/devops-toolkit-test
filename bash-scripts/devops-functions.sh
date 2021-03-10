@@ -36,8 +36,9 @@ function validate_source_paths {
 function source_cluster_env {
     if [ ! -f "${SOURCE_PATH}/environment.sh" ]; then
         echo "SOURCE_PATH: ${SOURCE_PATH}"
-        echo "*** Environment file ${SOURCE_PATH}/cluster/config.sh does not exist! Exiting."
-        exit_with_error
+        echo "*** Environment file ${SOURCE_PATH}/cluster/config.sh does not exist!"
+        # exit_with_error
+        return
     fi
     source ${SOURCE_PATH}/environment.sh
 }

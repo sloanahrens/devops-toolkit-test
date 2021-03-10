@@ -1,73 +1,114 @@
-# squash commits in branch
-git reset --soft HEAD~4 && git commit -m "basic django app with admin views and sample data"
-
-
 # build devops docker image:
 docker build -t devops -f docker/devops-image/Dockerfile .
 
 
-# AWS creds (I can provide these as needed):
-export AWS_ACCESS_KEY_ID=[REPLACE]
-export AWS_SECRET_ACCESS_KEY=[REPLACE]
+# AWS creds:
+export AWS_ACCESS_KEY_ID=[...]
+export AWS_SECRET_ACCESS_KEY=[...]
+#####
+
+
+# legacy (non-k8s) aws ec2 deployment with docker-compose
+docker run \
+  -v $PWD:/src \
+  -e AWS_ACCESS_KEY_ID \
+  -e AWS_SECRET_ACCESS_KEY \
+  -e REGION='us-east-2' \
+  -e DEPLOYMENT_TYPE='production' \
+  -e R53_ZONE='[...]' \
+  -e AWS_KEY_NAME='[...]' \
+  -e COLOR='blue' \
+  -e MODE='deploy-color' \
+  devops bash /src/bash-scripts/legacy-aws/deploy-docker-compose-ec2-rds-stack.sh
+#####
+
+### destroy legacy stack
+docker run \
+  -v $PWD:/src \
+  -e AWS_ACCESS_KEY_ID \
+  -e AWS_SECRET_ACCESS_KEY \
+  -e REGION='us-east-2' \
+  -e DEPLOYMENT_TYPE='production' \
+  devops bash /src/bash-scripts/legacy-aws/destroy-legacy-stack.sh
+#####
+
+
+# k8s-related:
 export IMAGE_TAG=test
 export STACK_NAME=teststack
-
-# destroy k8s cluster:
-docker run \
-  -v $PWD:/src \
-  -e AWS_ACCESS_KEY_ID \
-  -e AWS_SECRET_ACCESS_KEY \
-  devops bash bash-scripts/k8s-clusters/destroy-cluster.sh
+export SOURCE_PATH=/src/kubernetes/us-east-2/dev
 
 
-# deploy k8s cluster:
-docker run \
-  -v $PWD:/src \
-  -e AWS_ACCESS_KEY_ID \
-  -e AWS_SECRET_ACCESS_KEY \
-  devops bash bash-scripts/k8s-clusters/deploy-cluster.sh
-
-
-# run devops image terminal:
-docker run -it \
-  -v $PWD:/src \
-  -e AWS_ACCESS_KEY_ID \
-  -e AWS_SECRET_ACCESS_KEY \
-  devops bash
-
-# build docker images
 bash bash-scripts/images/build-docker-images.sh
 
-# push docker images
-docker run \
+bash bash-scripts/testing/docker-compose-stack-test-local.sh
+
+docker run --rm -it \
   -v /var/run/docker.sock:/var/run/docker.sock \
   -v $PWD:/src \
   -e AWS_ACCESS_KEY_ID \
   -e AWS_SECRET_ACCESS_KEY \
   -e IMAGE_TAG \
+  devops bash /src/bash-scripts/images/push-docker-images.sh
+
+# terminal
+docker run --rm -it \
+  -v $PWD:/src \
+  -e AWS_ACCESS_KEY_ID \
+  -e AWS_SECRET_ACCESS_KEY \
+  -e SOURCE_PATH \
+  -e CONFIG_PATH='/src/kubernetes/stack-config/test' \
+  -e IMAGE_TAG \
+  -e STACK_NAME \
+  devops bash
+
+# push images
+docker run --rm \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v $PWD:/src \
+  -e AWS_ACCESS_KEY_ID \
+  -e AWS_SECRET_ACCESS_KEY \
+  -e IMAGE_TAG \
+  -e SOURCE_PATH \
   devops \
   bash /src/bash-scripts/images/push-docker-images.sh
 
-# deploy app stack
-docker run \
+# deploy cluster
+docker run --rm \
+  -v $PWD:/src \
+  -e AWS_ACCESS_KEY_ID \
+  -e AWS_SECRET_ACCESS_KEY \
+  -e SOURCE_PATH \
+  devops bash bash-scripts/k8s-clusters/deploy-cluster.sh
+
+# deploy stack
+docker run --rm \
+  -v $PWD:/src \
+  -e AWS_ACCESS_KEY_ID \
+  -e AWS_SECRET_ACCESS_KEY \
+  -e SOURCE_PATH \
+  -e CONFIG_PATH='/src/kubernetes/stack-config/test' \
+  -e IMAGE_TAG \
+  -e STACK_NAME \
+  devops bash /src/bash-scripts/app-stacks/deploy-k8s-app-stack.sh
+
+
+docker run -e SERVICE="https://${STACK_NAME}.sloanahrens.com" stacktest ./integration-tests.sh
+
+# destroy stack
+docker run --rm \
   -v $PWD:/src \
   -e AWS_ACCESS_KEY_ID \
   -e AWS_SECRET_ACCESS_KEY \
   -e IMAGE_TAG \
   -e STACK_NAME \
-  devops bash /src/bash-scripts/app-stacks/deploy-k8s-app-stack.sh
-
-# destroy app stack
-docker run \
-  -v $PWD:/src \
-  -e AWS_ACCESS_KEY_ID \
-  -e AWS_SECRET_ACCESS_KEY \
-  -e STACK_NAME \
+  -e SOURCE_PATH \
   devops bash /src/bash-scripts/app-stacks/destroy-k8s-app-stack.sh
 
 
+
 ###############################
-# run docker-compose dev stack:
+# run local docker-compose dev stack:
 #####
 docker-compose -f devflow/docker-compose-local-dev.yaml up
 

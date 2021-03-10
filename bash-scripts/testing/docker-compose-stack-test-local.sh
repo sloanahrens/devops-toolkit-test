@@ -10,7 +10,7 @@ docker-compose -f devflow/docker-compose-prod-stack.yaml down --remove-orphans
 docker-compose -f devflow/docker-compose-prod-stack.yaml up -d
 
 sleep 20
-
+ 
 docker run --rm \
     --name stacktester \
     --network container:local_prod_webapp \
