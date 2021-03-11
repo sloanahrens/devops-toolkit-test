@@ -43,38 +43,38 @@ jobs:
             export IMAGE_TAG=$(echo "$TRAVIS_BRANCH" | sed 's/[^a-zA-Z0-9]/-/g'| sed -e 's/\(.*\)/\L\1/')
             echo "IMAGE_TAG: ${IMAGE_TAG}"
             bash bash-scripts/images/push-docker-images.sh
-      - run:
-          name: K8s Tests
-          command: |
-            set -x
-            export IMAGE_TAG=$(echo "$TRAVIS_BRANCH" | sed 's/[^a-zA-Z0-9]/-/g'| sed -e 's/\(.*\)/\L\1/')
-            echo "IMAGE_TAG: ${IMAGE_TAG}"
-            CLUSTER_REGION='us-east-2'
-            CLUSTER_PATH="kubernetes/${CLUSTER_REGION}/dev"
-            source ${CLUSTER_PATH}/environment.sh
-            export SOURCE_PATH="/src/${CLUSTER_PATH}"
-            echo "SOURCE_PATH: ${SOURCE_PATH}"
-            export STACK_NAME="ci-${TRAVIS_BUILD_NUMBER}-${IMAGE_TAG}"
-            echo "STACK_NAME: ${STACK_NAME}"
-            export CONFIG_PATH='/src/kubernetes/stack-config/test'
-            echo "-- Attempting to pull kubeconfig..."
-            bash bash-scripts/k8s-clusters/pull-kube-config.sh
-            if [ -f "${CLUSTER_PATH}/cluster/kubecfg.yaml" ]; then
-              echo "-- Attempting to validate cluster..."
-              bash bash-scripts/k8s-clusters/validate-cluster.sh
-              echo "-- Deploying K8s app-stack to ${CLUSTER_REGION}..."
-              bash bash-scripts/app-stacks/deploy-k8s-app-stack.sh
-              # this is inelegant, but avoids DNS cacheing problems in test script
-              echo "-- Sleeping 120 seconds..."
-              sleep 120
-              echo "-- Running API functional-tests against K8s app-stack..."
-              docker run --rm SERVICE="${STACK_NAME}.{DOMAIN_NAME}" stacktest ./integration-tests.sh
-              echo "-- Destroying app-stack..."
-              bash bash-scripts/app-stacks/destroy-k8s-app-stack.sh
-              echo "-- Kubernetes-stack functional tests succeeded."
-            else
-              echo "-- Kubernetes cluster not found, so not running K8s tests."
-            fi
+      # - run:
+      #     name: K8s Tests
+      #     command: |
+      #       set -x
+      #       export IMAGE_TAG=$(echo "$TRAVIS_BRANCH" | sed 's/[^a-zA-Z0-9]/-/g'| sed -e 's/\(.*\)/\L\1/')
+      #       echo "IMAGE_TAG: ${IMAGE_TAG}"
+      #       CLUSTER_REGION='us-east-2'
+      #       CLUSTER_PATH="kubernetes/${CLUSTER_REGION}/dev"
+      #       source ${CLUSTER_PATH}/environment.sh
+      #       export SOURCE_PATH="/src/${CLUSTER_PATH}"
+      #       echo "SOURCE_PATH: ${SOURCE_PATH}"
+      #       export STACK_NAME="ci-${TRAVIS_BUILD_NUMBER}-${IMAGE_TAG}"
+      #       echo "STACK_NAME: ${STACK_NAME}"
+      #       export CONFIG_PATH='/src/kubernetes/stack-config/test'
+      #       echo "-- Attempting to pull kubeconfig..."
+      #       bash bash-scripts/k8s-clusters/pull-kube-config.sh
+      #       if [ -f "${CLUSTER_PATH}/cluster/kubecfg.yaml" ]; then
+      #         echo "-- Attempting to validate cluster..."
+      #         bash bash-scripts/k8s-clusters/validate-cluster.sh
+      #         echo "-- Deploying K8s app-stack to ${CLUSTER_REGION}..."
+      #         bash bash-scripts/app-stacks/deploy-k8s-app-stack.sh
+      #         # this is inelegant, but avoids DNS cacheing problems in test script
+      #         echo "-- Sleeping 120 seconds..."
+      #         sleep 120
+      #         echo "-- Running API functional-tests against K8s app-stack..."
+      #         docker run --rm SERVICE="${STACK_NAME}.{DOMAIN_NAME}" stacktest ./integration-tests.sh
+      #         echo "-- Destroying app-stack..."
+      #         bash bash-scripts/app-stacks/destroy-k8s-app-stack.sh
+      #         echo "-- Kubernetes-stack functional tests succeeded."
+      #       else
+      #         echo "-- Kubernetes cluster not found, so not running K8s tests."
+      #       fi
 
   prod_stack_deployment:
     <<: *defaults
@@ -82,41 +82,41 @@ jobs:
       - checkout
       - setup_remote_docker:
           version: '20.10.2'
+      # # - run:
+      # #     name: Build Stack Tester Image
+      # #     command: |
+      # #       set -x
+      # #       docker build -t stacktest -f docker/stacktest/Dockerfile .
       # - run:
-      #     name: Build Stack Tester Image
+      #     name: Build and Test Production K8s Stack
       #     command: |
       #       set -x
-      #       docker build -t stacktest -f docker/stacktest/Dockerfile .
-      - run:
-          name: Build and Test Production K8s Stack
-          command: |
-            set -x
-            export IMAGE_TAG=stellarbot
-            echo "IMAGE_TAG: ${IMAGE_TAG}"
-            CLUSTER_REGION='us-east-2'
-            CLUSTER_PATH="kubernetes/${CLUSTER_REGION}/dev"
-            source ${CLUSTER_PATH}/environment.sh
-            export SOURCE_PATH="/src/${CLUSTER_PATH}"
-            echo "SOURCE_PATH: ${SOURCE_PATH}"
-            export STACK_NAME="ci-${TRAVIS_BUILD_NUMBER}-${IMAGE_TAG}"
-            echo "STACK_NAME: ${STACK_NAME}"
-            export CONFIG_PATH='/src/kubernetes/stack-config/test'
-            echo "-- Attempting to pull kubeconfig..."
-            bash bash-scripts/k8s-clusters/pull-kube-config.sh
-            if [ -f "${CLUSTER_PATH}/cluster/kubecfg.yaml" ]; then
-              echo "-- Attempting to validate cluster..."
-              bash bash-scripts/k8s-clusters/validate-cluster.sh
-              echo "-- Deploying K8s app-stack to ${CLUSTER_REGION}..."
-              bash bash-scripts/app-stacks/deploy-k8s-app-stack.sh
-              # this is inelegant, but avoids DNS cacheing problems in test script
-              echo "-- Sleeping 120 seconds..."
-              sleep 120
-              echo "-- Running API functional-tests against K8s app-stack..."
-              docker run --rm SERVICE="${STACK_NAME}.{DOMAIN_NAME}" stacktest ./integration-tests.sh
-              echo "-- Production K8s-stack deployed and functional tests succeeded."
-            else
-              echo "-- Kubernetes cluster not found, so not deploying K8s stack."
-            fi
+      #       export IMAGE_TAG=stellarbot
+      #       echo "IMAGE_TAG: ${IMAGE_TAG}"
+      #       CLUSTER_REGION='us-east-2'
+      #       CLUSTER_PATH="kubernetes/${CLUSTER_REGION}/dev"
+      #       source ${CLUSTER_PATH}/environment.sh
+      #       export SOURCE_PATH="/src/${CLUSTER_PATH}"
+      #       echo "SOURCE_PATH: ${SOURCE_PATH}"
+      #       export STACK_NAME="ci-${TRAVIS_BUILD_NUMBER}-${IMAGE_TAG}"
+      #       echo "STACK_NAME: ${STACK_NAME}"
+      #       export CONFIG_PATH='/src/kubernetes/stack-config/test'
+      #       echo "-- Attempting to pull kubeconfig..."
+      #       bash bash-scripts/k8s-clusters/pull-kube-config.sh
+      #       if [ -f "${CLUSTER_PATH}/cluster/kubecfg.yaml" ]; then
+      #         echo "-- Attempting to validate cluster..."
+      #         bash bash-scripts/k8s-clusters/validate-cluster.sh
+      #         echo "-- Deploying K8s app-stack to ${CLUSTER_REGION}..."
+      #         bash bash-scripts/app-stacks/deploy-k8s-app-stack.sh
+      #         # this is inelegant, but avoids DNS cacheing problems in test script
+      #         echo "-- Sleeping 120 seconds..."
+      #         sleep 120
+      #         echo "-- Running API functional-tests against K8s app-stack..."
+      #         docker run --rm SERVICE="${STACK_NAME}.{DOMAIN_NAME}" stacktest ./integration-tests.sh
+      #         echo "-- Production K8s-stack deployed and functional tests succeeded."
+      #       else
+      #         echo "-- Kubernetes cluster not found, so not deploying K8s stack."
+      #       fi
 
 workflows:
   version: 2

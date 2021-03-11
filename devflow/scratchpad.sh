@@ -17,8 +17,6 @@ docker run \
   -e DEPLOYMENT_TYPE='production' \
   -e R53_ZONE='[...]' \
   -e AWS_KEY_NAME='[...]' \
-  -e COLOR='blue' \
-  -e MODE='deploy-color' \
   devops bash /src/bash-scripts/legacy-aws/deploy-docker-compose-ec2-rds-stack.sh
 #####
 
