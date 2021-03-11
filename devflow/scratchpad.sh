@@ -7,6 +7,15 @@ export AWS_ACCESS_KEY_ID=[...]
 export AWS_SECRET_ACCESS_KEY=[...]
 #####
 
+export ECR_ID=[...]
+export ECR_REGION=[...]
+
+
+export IMAGE_TAG=test
+export STACK_NAME=teststack
+export SOURCE_PATH=/src/kubernetes/us-east-2/dev
+export CONFIG_PATH='/src/kubernetes/stack-config/test'
+
 
 # legacy (non-k8s) aws ec2 deployment with docker-compose
 docker run \
@@ -31,12 +40,6 @@ docker run \
 #####
 
 
-# k8s-related:
-export IMAGE_TAG=test
-export STACK_NAME=teststack
-export SOURCE_PATH=/src/kubernetes/us-east-2/dev
-
-
 bash bash-scripts/images/build-docker-images.sh
 
 bash bash-scripts/testing/docker-compose-stack-test-local.sh
@@ -49,13 +52,26 @@ docker run --rm -it \
   -e IMAGE_TAG \
   devops bash /src/bash-scripts/images/push-docker-images.sh
 
+docker run --rm \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v $PWD:/src \
+  -e AWS_ACCESS_KEY_ID \
+  -e AWS_SECRET_ACCESS_KEY \
+  -e SOURCE_PATH \
+  -e CONFIG_PATH \
+  -e IMAGE_TAG \
+  -e STACK_NAME \
+  -e ECR_ID \
+  -e ECR_REGION \
+  devops bash bash-scripts/testing/docker-compose-stack-test-tagged.sh
+
 # terminal
 docker run --rm -it \
   -v $PWD:/src \
   -e AWS_ACCESS_KEY_ID \
   -e AWS_SECRET_ACCESS_KEY \
   -e SOURCE_PATH \
-  -e CONFIG_PATH='/src/kubernetes/stack-config/test' \
+  -e CONFIG_PATH \
   -e IMAGE_TAG \
   -e STACK_NAME \
   devops bash

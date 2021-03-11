@@ -1,0 +1,86 @@
+version: '3.4'
+
+services:
+
+  api-gateway:
+    image: ${ECR_ID}.dkr.ecr.${ECR_REGION}.amazonaws.com/stellarbot/api-gateway:${IMAGE_TAG}
+    restart: unless-stopped
+    tty: true
+    container_name: local_prod_api_gateway
+    ports:
+      - "9999:9999"
+
+  ui:
+    image: ${ECR_ID}.dkr.ecr.${ECR_REGION}.amazonaws.com/stellarbot/ui:${IMAGE_TAG}
+    restart: unless-stopped
+    tty: true
+    container_name: tagged_prod_ui
+    ports:
+      - "80:80"
+
+  webapp:
+    image: ${ECR_ID}.dkr.ecr.${ECR_REGION}.amazonaws.com/stellarbot/django:${IMAGE_TAG}
+    restart: unless-stopped
+    tty: true
+    container_name: tagged_prod_webapp
+    env_file:
+     - ../container_environments/test-stack.yaml
+    ports:
+      - "8000:8000"
+    links:
+      - database
+      - queue
+      - redis
+    command: /src/initialize-webapp.sh
+
+  worker:
+    image: ${ECR_ID}.dkr.ecr.${ECR_REGION}.amazonaws.com/stellarbot/django:${IMAGE_TAG}
+    restart: unless-stopped
+    tty: true
+    container_name: tagged_prod_worker
+    env_file:
+     - ../container_environments/test-stack.yaml
+    links:
+      - database
+      - queue
+      - redis
+    command: bash -c "export C_FORCE_ROOT=true && celery --app=stellarbot.celery worker -O fair -c 1 --loglevel=info"
+
+  beat:
+    image: ${ECR_ID}.dkr.ecr.${ECR_REGION}.amazonaws.com/stellarbot/django:${IMAGE_TAG}
+    restart: unless-stopped
+    tty: true
+    container_name: tagged_prod_beat
+    env_file:
+     - ../container_environments/test-stack.yaml
+    links:
+      - database
+      - queue
+      - redis
+    command: bash -c "export C_FORCE_ROOT=true && sleep 20 && celery --app=stellarbot.celery beat --loglevel=info"
+
+  queue:
+    image: rabbitmq:alpine
+    container_name: tagged_dev_rabbitmq
+    env_file:
+     - ../container_environments/test-stack.yaml
+
+  redis:
+    image: redis:alpine
+    container_name: tagged_dev_redis
+    env_file:
+     - ../container_environments/test-stack.yaml
+
+  database:
+    image: postgres:alpine
+    restart: unless-stopped
+    tty: true
+    container_name: tagged_prod_postgres
+    env_file:
+     - ../container_environments/test-stack.yaml
+    # volumes:
+    #   - postgres_data:/var/lib/postgresql/data
+
+# volumes:
+#   postgres_data:
+#     external: false

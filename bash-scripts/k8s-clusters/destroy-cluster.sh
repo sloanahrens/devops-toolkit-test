@@ -28,4 +28,4 @@ delete_kube_config
 
 remove_cluster_updating_status
 
-# source devflow/scripts/k8s-clusters/destroy-terraform-remote-state.sh
+source /src/bash-scripts/k8s-clusters/destroy-terraform-remote-state.sh

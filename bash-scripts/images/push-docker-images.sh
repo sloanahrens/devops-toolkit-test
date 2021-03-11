@@ -2,8 +2,8 @@
 
 set -e
 
-ECR_REGION=${ECR_REGION-'us-east-2'}
-ECR_ID=${ECR_ID-'421987441365'}
+# ECR_REGION=${ECR_REGION-'us-east-2'}
+# ECR_ID=${ECR_ID-'421987441365'}
 
 $(aws ecr get-login --no-include-email --region ${ECR_REGION})
 

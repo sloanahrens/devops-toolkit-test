@@ -30,7 +30,7 @@ jobs:
             echo "IMAGE_TAG: ${IMAGE_TAG}"
             bash bash-scripts/images/build-docker-images.sh
       - run:
-          name: Docker-Compose Tests
+          name: Local-image Docker-Compose Tests
           command: |
             set -x
             export IMAGE_TAG=$(echo "$TRAVIS_BRANCH" | sed 's/[^a-zA-Z0-9]/-/g'| sed -e 's/\(.*\)/\L\1/')
@@ -43,6 +43,13 @@ jobs:
             export IMAGE_TAG=$(echo "$TRAVIS_BRANCH" | sed 's/[^a-zA-Z0-9]/-/g'| sed -e 's/\(.*\)/\L\1/')
             echo "IMAGE_TAG: ${IMAGE_TAG}"
             bash bash-scripts/images/push-docker-images.sh
+      - run:
+          name: Tagged-image Docker-Compose Tests
+          command: |
+            set -x
+            export IMAGE_TAG=$(echo "$TRAVIS_BRANCH" | sed 's/[^a-zA-Z0-9]/-/g'| sed -e 's/\(.*\)/\L\1/')
+            echo "IMAGE_TAG: ${IMAGE_TAG}"
+            bash bash-scripts/testing/docker-compose-stack-test-tagged.sh
       # - run:
       #     name: K8s Tests
       #     command: |
