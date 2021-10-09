@@ -61,8 +61,7 @@ jobs:
             set -x
             export IMAGE_TAG=$(python3 -c "import re; print(re.sub('[^0-9a-zA-Z]+', '-', '${CIRCLE_BRANCH}').lower())")
             echo "IMAGE_TAG: ${IMAGE_TAG}"
-            export ECR_ID=421987441365
-            export ECR_REGION=us-east-2
+            source docker/repo.sh
             export ROOT_PATH=.
             docker system prune -af --volumes
             docker build -t stacktest -f docker/stacktest/Dockerfile .

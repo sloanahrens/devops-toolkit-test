@@ -58,7 +58,6 @@ docker run --rm \
   -e AWS_ACCESS_KEY_ID \
   -e AWS_SECRET_ACCESS_KEY \
   -e IMAGE_TAG \
-  -e TESTERUSER_PASSWORD \
   devops bash /src/bash-scripts/testing/test-tagged-image-docker-compose-stack.sh
 
 #####
