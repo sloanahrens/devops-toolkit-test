@@ -30,22 +30,12 @@ docker-compose -f docker/docker-compose-prod-stack-tagged.yaml up -d
 
 sleep 30
 
-# docker run --rm \
-#     --name stacktester \
-#     --network container:tagged_prod_webapp \
-#     -e SERVICE="localhost:8000" \
-#     -e TESTERUSER_PASSWORD \
-#     stacktest ./integration-tests.sh
-
 docker run --rm \
     --name stacktester \
     --network container:tagged_prod_api_gateway \
     -e SERVICE="localhost:9999/api/v0.1" \
-    -e TESTERUSER_PASSWORD \
+    -e TESTERUSER_PASSWORD=entendre-wist-surgeon \
     stacktest ./integration-tests.sh
-
-## ^^^ kill the tester container if you don't want to wait:
-# docker kill stacktester
 
 docker-compose -f docker/docker-compose-prod-stack-tagged.yaml down --remove-orphans
 

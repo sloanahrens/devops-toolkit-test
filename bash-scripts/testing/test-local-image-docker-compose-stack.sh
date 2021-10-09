@@ -23,7 +23,7 @@ docker run --rm \
     --name stacktester \
     --network container:local_prod_api_gateway \
     -e SERVICE="localhost:9999/api/v0.1" \
-    -e TESTERUSER_PASSWORD \
+    -e TESTERUSER_PASSWORD=entendre-wist-surgeon \
     stacktest ./integration-tests.sh
 
 ## ^^^ kill the tester container if you don't want to wait:
