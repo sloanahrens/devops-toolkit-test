@@ -14,4 +14,13 @@ class Command(BaseCommand):
                                           os.getenv('SUPERUSER_PASSWORD', 'blare-ardent-oyster-parlay'))
             print('Useruser "admin" created.')
         else:
-            print('Useruser "admin" exists.')
+            print('Superuser "admin" exists.')
+
+        if User.objects.filter(username='stacktester').count() == 0:
+
+            User.objects.create_user(username='stacktester',
+                                     email='stacktester@nowhere.com',
+                                     password=os.getenv('TESTERUSER_PASSWORD', 'avon-pipeful-sill-pibroch-hunk'))
+            print('Useruser "stacktester" created.')
+        else:
+            print('Useruser "stacktester" exists.')

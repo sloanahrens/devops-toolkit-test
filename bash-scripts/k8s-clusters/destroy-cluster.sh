@@ -4,11 +4,6 @@
 source ${ROOT_PATH}/bash-scripts/devops-functions.sh
 run_setup
 
-if [ "$1" == "force" ]; then
-    echo "** Forcing cluster update **"
-    remove_cluster_updating_status
-fi
-
 set_cluster_updating_status
 
 pull_kube_config
@@ -26,6 +21,10 @@ kops delete cluster --name $CLUSTER_NAME --state s3://$BUCKET_NAME --yes
 
 delete_kube_config
 
-remove_cluster_updating_status
+echo "Removing cluster terraform files..."
+rm -rf ${SOURCE_PATH}/cluster/.terraform*
 
-source /src/bash-scripts/k8s-clusters/destroy-terraform-remote-state.sh
+# destroy remote state resources
+# source ${ROOT_PATH}/bash-scripts/k8s-clusters/destroy-terraform-remote-state.sh
+
+remove_cluster_updating_status

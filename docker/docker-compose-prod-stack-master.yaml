@@ -1,0 +1,69 @@
+version: '3.4'
+
+services:
+
+  api-gateway:
+    image: 421987441365.dkr.ecr.us-east-2.amazonaws.com/stellarbot/api-gateway:master
+    restart: unless-stopped
+    tty: true
+    container_name: master_prod_api_gateway
+    ports:
+      - "9999:9999"
+
+  ui:
+    image: 421987441365.dkr.ecr.us-east-2.amazonaws.com/stellarbot/ui:master
+    restart: unless-stopped
+    tty: true
+    container_name: master_prod_ui
+    ports:
+      - "80:80"
+
+  webapp:
+    image: 421987441365.dkr.ecr.us-east-2.amazonaws.com/stellarbot/django:master
+    restart: unless-stopped
+    tty: true
+    container_name: master_prod_webapp
+    env_file:
+     - /home/ec2-user/stack-config.yaml
+    ports:
+      - "8000:8000"
+    links:
+      - queue
+      - redis
+    command: /src/initialize-webapp.sh
+
+  worker:
+    image: 421987441365.dkr.ecr.us-east-2.amazonaws.com/stellarbot/django:master
+    restart: unless-stopped
+    tty: true
+    container_name: master_prod_worker
+    env_file:
+     - /home/ec2-user/stack-config.yaml
+    links:
+      - queue
+      - redis
+    command: bash -c "export C_FORCE_ROOT=true && celery --app=stellarbot.celery worker -O fair -c 1 --loglevel=info"
+
+  beat:
+    image: 421987441365.dkr.ecr.us-east-2.amazonaws.com/stellarbot/django:master
+    restart: unless-stopped
+    tty: true
+    container_name: master_prod_beat
+    env_file:
+     - /home/ec2-user/stack-config.yaml
+    links:
+      - queue
+      - redis
+    command: bash -c "export C_FORCE_ROOT=true && sleep 20 && celery --app=stellarbot.celery beat --loglevel=info"
+
+  queue:
+    image: rabbitmq:alpine
+    container_name: master_prod_rabbitmq
+    env_file:
+     - /home/ec2-user/stack-config.yaml
+
+  redis:
+    image: redis:alpine
+    container_name: master_prod_redis
+    env_file:
+     - /home/ec2-user/stack-config.yaml

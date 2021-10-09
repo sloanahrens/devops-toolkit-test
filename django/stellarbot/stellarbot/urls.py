@@ -9,6 +9,12 @@ from stellarbot.views import (AppHealthCheckView,
                               DataLoadedCheckView,
                               LedgersView)
 
+from rest_framework_simplejwt.views import (
+    TokenObtainPairView,
+    TokenRefreshView,
+    TokenVerifyView,
+)
+
 # from api.models import Ledger
 # from api.serializers import LedgerSerializer
 
@@ -24,9 +30,13 @@ from stellarbot.views import (AppHealthCheckView,
 urlpatterns = [
     path('admin/', admin.site.urls),
 
+    path('api/token', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/token/refresh', TokenRefreshView.as_view(), name='token_refresh'),
+    # path('api/token/verify/', TokenVerifyView.as_view(), name='token_verify'),
+
     # path('data/', include(router.urls)),
 
-    path('data/ledgers/', LedgersView.as_view()),
+    path('data/ledgers', LedgersView.as_view()),
 
     path('health/app/', AppHealthCheckView.as_view()),
     path('health/celery/', CeleryHealthCheckView.as_view()),

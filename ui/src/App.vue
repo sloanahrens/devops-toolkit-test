@@ -1,8 +1,17 @@
 <template>
   <div id="app">
-    <div id="nav">
-      <router-link to="/">Home</router-link>
-    </div>
+    <b-navbar>
+      <b-navbar-brand>
+        <b-link to="/">
+          <img class="site-logo" src="@/assets/logo.png" alt="Vue.js">
+        </b-link>
+        </b-navbar-brand>
+        <div id="nav">
+          <b-link to="/">Home</b-link> |
+          <b-link to="/login" v-if="!currentUser">Log In</b-link>
+          <b-link to="/logout" v-if="currentUser">Log Out</b-link>
+        </div>
+    </b-navbar>
     <router-view/>
   </div>
 </template>
@@ -17,7 +26,7 @@ html, body {
 #app {
   width: 100%;
   height: 100%;
-  font-family: Avenir, Helvetica, Arial, sans-serif;
+  font-family: Calibri, Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
@@ -57,12 +66,28 @@ textarea.form-control.really-big-textarea {
 .site-logo {
     display: block;
     float: left;
-    height: 32px;
-    margin-right: 20px;
-    overflow: hidden;
-    padding: 20px 0 10px;
     text-align: left;
-    text-indent: -5000px;
-    width: 90px;
+    width: 120px;
 }
+
+.navbar-expand {
+  justify-content: center;
+}
+
 </style>
+
+<script>
+import { authenticationService } from '@/_services'
+
+export default {
+  name: 'app',
+  data () {
+    return {
+      currentUser: null
+    }
+  },
+  created () {
+    authenticationService.currentUser.subscribe(x => { this.currentUser = x })
+  }
+}
+</script>

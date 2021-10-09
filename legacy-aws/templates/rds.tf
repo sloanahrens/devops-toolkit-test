@@ -4,8 +4,8 @@ resource "aws_db_instance" "rds-postgres-REGION-DEPLOYMENT_TYPE-primary" {
    allocated_storage         = 15
    storage_type              = "standard"
    engine                    = "postgres"
-   engine_version            = "9.6.11"
-   instance_class            = "db.t2.small"
+   engine_version            = "9.6.20"
+   instance_class            = "db.m5.large"
    name                      = "stellarbotdb"
    username                  = "stellarbot"
    password                  = "deal-gridlock-overlook-beckon-tout-tulip-environ-overstep"
@@ -18,7 +18,7 @@ resource "aws_db_instance" "rds-postgres-REGION-DEPLOYMENT_TYPE-primary" {
    backup_retention_period   = 14
    backup_window             = "07:19-07:49"
    maintenance_window        = "mon:06:16-mon:06:46"
-   final_snapshot_identifier = "primary-REGION-DEPLOYMENT_TYPE-final-snapshot-${random_string.randstr.result}"
+   final_snapshot_identifier = "primary-REGION-DEPLOYMENT_TYPE-final-snapshot-${random_string.random.result}"
     tags = {
       "Name" = "RDS Postgres Cluster for DEPLOYMENT_TYPE REGION primary"
       "Reach" = "Private"
@@ -36,7 +36,7 @@ resource "aws_route53_record" "postgres-REGION-DEPLOYMENT_TYPE-primary" {
 resource "aws_security_group" "rds_postgres_sg-DEPLOYMENT_TYPE-REGION" {
   name        = "rds_postgres_server_sg-DEPLOYMENT_TYPE-REGION"
   description = "Security Group for Postgres RDS - DEPLOYMENT_TYPE - REGION"
-  vpc_id      = aws_vpc.stellarbot-DEPLOYMENT_TYPE-REGION-legacy.id
+  vpc_id      = aws_vpc.my_vpc.id
 
   ingress {
     from_port   = 5432
@@ -49,7 +49,7 @@ resource "aws_security_group" "rds_postgres_sg-DEPLOYMENT_TYPE-REGION" {
 resource "aws_security_group_rule" "all-web-to-postgres" {
   from_port                = 5432
   protocol                 = "tcp"
-  security_group_id        = aws_security_group.legacy_web_server_sg-DEPLOYMENT_TYPE-REGION.id
+  security_group_id        = aws_security_group.web_instance_sg.id
   source_security_group_id = aws_security_group.rds_postgres_sg-DEPLOYMENT_TYPE-REGION.id
   to_port                  = 5432
   type                     = "ingress"
@@ -59,9 +59,8 @@ resource "aws_security_group_rule" "all-web-to-postgres" {
 resource "aws_db_subnet_group" "db-REGION-DEPLOYMENT_TYPE" {
     name = "db_subnet_group_for_legacy-REGION-DEPLOYMENT_TYPE"
     subnet_ids = [
-      "${aws_subnet.REGIONa-stellarbot-DEPLOYMENT_TYPE-REGION-legacy.id}",
-      "${aws_subnet.REGIONb-stellarbot-DEPLOYMENT_TYPE-REGION-legacy.id}",
-      "${aws_subnet.REGIONc-stellarbot-DEPLOYMENT_TYPE-REGION-legacy.id}"
+      "${aws_subnet.public_DEPLOYMENT_TYPE-REGIONa.id}",
+      "${aws_subnet.public_DEPLOYMENT_TYPE-REGIONb.id}"
     ]
     tags = {
       "Name" = "DB Subnet Group for DEPLOYMENT_TYPE REGION"
@@ -71,7 +70,11 @@ resource "aws_db_subnet_group" "db-REGION-DEPLOYMENT_TYPE" {
 resource "aws_route53_zone" "internaldb-DEPLOYMENT_TYPE-REGION" {
     name         = "db-DEPLOYMENT_TYPE-REGION.com."
     vpc {
-      vpc_id     = aws_vpc.stellarbot-DEPLOYMENT_TYPE-REGION-legacy.id
+      vpc_id     = aws_vpc.my_vpc.id
     }
 }
 #####
+
+output "rds_internal_endpoint" {
+  value = aws_route53_record.postgres-REGION-DEPLOYMENT_TYPE-primary.fqdn
+}

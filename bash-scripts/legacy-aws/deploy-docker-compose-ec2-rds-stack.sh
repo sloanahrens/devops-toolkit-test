@@ -1,12 +1,13 @@
 #!/bin/bash
 
 set -e
-set -x
+# set -x
+
+ROOT_PATH=${ROOT_PATH-$PWD}
 
 # environment
-DEPLOYMENT_TYPE=${DEPLOYMENT_TYPE-legacy-staging}
+DEPLOYMENT_TYPE=${DEPLOYMENT_TYPE-staging}
 REGION=${REGION-us-east-1}
-AWS_KEY_NAME=${AWS_KEY_NAME-devops-key-${REGION}-${DEPLOYMENT_TYPE}}
 
 if test -z "${AWS_ACCESS_KEY_ID}"; then
       echo "*** AWS_ACCESS_KEY_ID not found! Exiting."
@@ -17,19 +18,17 @@ if test -z "${AWS_SECRET_ACCESS_KEY}"; then
       exit_with_error
 fi
 
+SOURCE_PATH=${ROOT_PATH}/legacy-aws/${REGION}/${DEPLOYMENT_TYPE}
+mkdir -p ${SOURCE_PATH}
+
 echo "-----"
-KEY_PATH="/src/kubernetes/keys/${AWS_KEY_NAME}.pem"
+KEY_PATH="${ROOT_PATH}/legacy-aws/${AWS_KEY_NAME}.pem"
 if test -f "${KEY_PATH}"; then
     echo "Key file ${KEY_PATH} found."
 else
-    echo "*** Key file ${KEY_PATH} does not exist! Exiting. ***"
-    exit 1
+    echo "*** Key file ${KEY_PATH} does not exist! Not exiting. ***"
+    # exit 1
 fi
-
-# S3_STATUS_BUCKET=stellarbot-legacy-blue-green-status
-
-SOURCE_PATH=/src/legacy-aws/${REGION}/${DEPLOYMENT_TYPE}
-mkdir -p ${SOURCE_PATH}
 
 echo "-----"
 echo "REGION: ${REGION}"
@@ -40,69 +39,82 @@ echo "AWS_KEY_NAME: ${AWS_KEY_NAME}"
 echo "-----"
 echo "Starting Legacy-app AWS deployment..."
 
-# VPC resources
-cat /src/legacy-aws/templates/vpc.tf \
+
+#####
+# comment out for faster deletes/re-builds
+echo "-----"
+echo "Deploying remote-state resources with terraform..."
+mkdir -p ${SOURCE_PATH}/remote-state
+cat ${ROOT_PATH}/legacy-aws/templates/remote_state_resources.tf \
   | sed -e "s@REGION@${REGION}@g" \
   | sed -e "s@DEPLOYMENT_TYPE@${DEPLOYMENT_TYPE}@g" \
-  > ${SOURCE_PATH}/vpc.tf
+  > ${SOURCE_PATH}/remote-state/remote_state_resources.tf
+cd ${SOURCE_PATH}/remote-state
 
-# core infrastructure 
-cat /src/legacy-aws/templates/core.tf \
+terraform init
+terraform plan
+terraform apply --auto-approve
+#####
+
+# create resource files from templates using environment variables:
+
+cat ${ROOT_PATH}/legacy-aws/templates/redux.tf \
   | sed -e "s@REGION@${REGION}@g" \
   | sed -e "s@DEPLOYMENT_TYPE@${DEPLOYMENT_TYPE}@g" \
   | sed -e "s@AWS_KEY_NAME@${AWS_KEY_NAME}@g" \
   | sed -e "s@R53_ZONE@${R53_ZONE}@g" \
-  > ${SOURCE_PATH}/core.tf
+  | sed -e "s@RANDOMSTR@${RANDOM}@g" \
+  > ${SOURCE_PATH}/infrastructure.tf
 
 # rds resources
-cat /src/legacy-aws/templates/rds.tf \
+cat ${ROOT_PATH}/legacy-aws/templates/rds.tf \
   | sed -e "s@REGION@${REGION}@g" \
   | sed -e "s@DEPLOYMENT_TYPE@${DEPLOYMENT_TYPE}@g" \
   | sed -e "s@AWS_KEY_NAME@${AWS_KEY_NAME}@g" \
   | sed -e "s@R53_ZONE@${R53_ZONE}@g" \
   > ${SOURCE_PATH}/rds.tf
 
-
-cd ${SOURCE_PATH}
-
-# mkdir -p ${SOURCE_PATH}/remote-state
-# cat ${ROOT_PATH}/kubernetes/templates/remote_state_resources.tf \
-#   | sed -e "s@REGION@${REGION}@g" \
-#   | sed -e "s@CLUSTER_TYPE@${DEPLOYMENT_TYPE}@g" \
-#   > ${SOURCE_PATH}/remote-state/remote_state_resources.tf
-# cd ${SOURCE_PATH}/remote-state
-# terraform init
-# terraform plan
-# terraform apply --auto-approve
-
-cat ${ROOT_PATH}/kubernetes/templates/remote_state.tf \
+# remote-state
+cat ${ROOT_PATH}/legacy-aws/templates/remote_state.tf \
   | sed -e "s@REGION@${REGION}@g" \
-  | sed -e "s@CLUSTER_TYPE@${DEPLOYMENT_TYPE}@g" \
+  | sed -e "s@DEPLOYMENT_TYPE@${DEPLOYMENT_TYPE}@g" \
   > ${SOURCE_PATH}/remote_state.tf
 
+# push the two files needed to run the docker images, which are pulled from the ec2-instance via instance user_data script
+aws s3 cp ${ROOT_PATH}/docker/docker-compose-prod-stack-master.yaml s3://stellarbot-legacy-${DEPLOYMENT_TYPE}-terraform-state-storage-${REGION}/docker-compose.yaml
+aws s3 cp ${ROOT_PATH}/container_environments/legacy-prod.yaml s3://stellarbot-legacy-${DEPLOYMENT_TYPE}-terraform-state-storage-${REGION}/stack-config.yaml
+
+sleep 10
+
 #####
+# main infrastructure terraform deployment commands
+echo "-----"
+echo "Deploying VPC and cloud infrastructure with terraform..."
 cd ${SOURCE_PATH}
 terraform init
 terraform plan
 terraform apply --auto-approve
+#####
 
 
 # extract information from terraform
 DEPLOYMENT_INFO=$(terraform output -json)
-echo "${DEPLOYMENT_INFO}"
+# echo "${DEPLOYMENT_INFO}"
 
-VPC_ID=$(echo ${DEPLOYMENT_INFO} | jq -r ".vpc_id.value")
-
-LEGACY_WEB_PUBLIC_DNS=$(echo ${DEPLOYMENT_INFO} | jq -r ".legacy_web_server_public_dns.value")
-
-LEGACY_WEB_PUBLIC_IP=$(echo ${DEPLOYMENT_INFO} | jq -r ".legacy_web_server_public_ip.value")
-
-echo "VPC_ID: ${VPC_ID}"
 echo "-----"
-echo "LEGACY_WEB_PUBLIC_DNS: ${LEGACY_WEB_PUBLIC_DNS}"
-echo "LEGACY_WEB_PUBLIC_IP: ${LEGACY_WEB_PUBLIC_IP}"
+echo "VPC_ID: $(echo ${DEPLOYMENT_INFO} | jq -r ".vpc_id.value")"
+echo "-----"
+echo "elb_dns_name: $(echo ${DEPLOYMENT_INFO} | jq -r ".elb_dns_name.value")"
+echo "-----"
+echo "stack_endpoint: $(echo ${DEPLOYMENT_INFO} | jq -r ".stack_endpoint.value")"
+echo "-----"
+echo "rds_internal_endpoint: $(echo ${DEPLOYMENT_INFO} | jq -r ".rds_internal_endpoint.value")"
+echo "-----"
+echo "Web server accessible via SSH with (find INSTANCE_IP in the AWS console):"
+echo "ssh -i legacy-aws/useast1-devopskey.pem ec2-user@[INSTANCE_IP]"
 echo "-----"
 echo "Deployment finished."
 echo "-----"
 echo ""
+
 

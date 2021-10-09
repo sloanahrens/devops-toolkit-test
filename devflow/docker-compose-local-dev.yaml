@@ -33,7 +33,7 @@ services:
     tty: true
     container_name: local_dev_webapp
     env_file:
-     - ../container_environments/test-stack.yaml
+     - ../container_environments/test_stack.yaml
     volumes:
       - ../django/stellarbot:/src
     ports:
@@ -47,7 +47,7 @@ services:
     image: baseimage
     container_name: local_dev_celery_worker
     env_file:
-     - ../container_environments/test-stack.yaml
+     - ../container_environments/test_stack.yaml
     environment:
       C_FORCE_ROOT: "yes"
     volumes:
@@ -62,7 +62,7 @@ services:
     image: baseimage
     container_name: local_dev_celery_beat
     env_file:
-     - ../container_environments/test-stack.yaml
+     - ../container_environments/test_stack.yaml
     environment:
       C_FORCE_ROOT: "yes"
     volumes:
@@ -76,13 +76,13 @@ services:
     image: rabbitmq:alpine
     container_name: local_dev_rabbitmq
     env_file:
-     - ../container_environments/test-stack.yaml
+     - ../container_environments/test_stack.yaml
 
   redis:
     image: redis:alpine
     container_name: local_dev_redis
     env_file:
-     - ../container_environments/test-stack.yaml
+     - ../container_environments/test_stack.yaml
 
   database:
     image: postgres:alpine
@@ -90,7 +90,7 @@ services:
     tty: true
     container_name: local_dev_database
     env_file:
-     - ../container_environments/test-stack.yaml
+     - ../container_environments/test_stack.yaml
     # volumes:
     #   - postgres_data:/var/lib/postgresql/data
 

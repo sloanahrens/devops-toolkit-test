@@ -1,8 +1,6 @@
 {
-  "Version": "2012-10-17",
   "Statement": [
     {
-      "Effect": "Allow",
       "Action": [
         "ec2:DescribeAccountAttributes",
         "ec2:DescribeInstances",
@@ -13,12 +11,12 @@
         "ec2:DescribeSubnets",
         "ec2:DescribeVolumes"
       ],
+      "Effect": "Allow",
       "Resource": [
         "*"
       ]
     },
     {
-      "Effect": "Allow",
       "Action": [
         "ec2:CreateSecurityGroup",
         "ec2:CreateTags",
@@ -27,12 +25,12 @@
         "ec2:ModifyInstanceAttribute",
         "ec2:ModifyVolume"
       ],
+      "Effect": "Allow",
       "Resource": [
         "*"
       ]
     },
     {
-      "Effect": "Allow",
       "Action": [
         "ec2:AttachVolume",
         "ec2:AuthorizeSecurityGroupIngress",
@@ -43,45 +41,45 @@
         "ec2:DetachVolume",
         "ec2:RevokeSecurityGroupIngress"
       ],
-      "Resource": [
-        "*"
-      ],
       "Condition": {
         "StringEquals": {
           "ec2:ResourceTag/KubernetesCluster": "stellarbot-dev-us-east-2.k8s.local"
         }
-      }
+      },
+      "Effect": "Allow",
+      "Resource": [
+        "*"
+      ]
     },
     {
-      "Effect": "Allow",
       "Action": [
         "autoscaling:DescribeAutoScalingGroups",
         "autoscaling:DescribeLaunchConfigurations",
         "autoscaling:DescribeTags",
         "ec2:DescribeLaunchTemplateVersions"
       ],
+      "Effect": "Allow",
       "Resource": [
         "*"
       ]
     },
     {
-      "Effect": "Allow",
       "Action": [
         "autoscaling:SetDesiredCapacity",
         "autoscaling:TerminateInstanceInAutoScalingGroup",
         "autoscaling:UpdateAutoScalingGroup"
       ],
-      "Resource": [
-        "*"
-      ],
       "Condition": {
         "StringEquals": {
           "autoscaling:ResourceTag/KubernetesCluster": "stellarbot-dev-us-east-2.k8s.local"
         }
-      }
+      },
+      "Effect": "Allow",
+      "Resource": [
+        "*"
+      ]
     },
     {
-      "Effect": "Allow",
       "Action": [
         "elasticloadbalancing:AddTags",
         "elasticloadbalancing:AttachLoadBalancerToSubnets",
@@ -100,12 +98,12 @@
         "elasticloadbalancing:RegisterInstancesWithLoadBalancer",
         "elasticloadbalancing:SetLoadBalancerPoliciesForBackendServer"
       ],
+      "Effect": "Allow",
       "Resource": [
         "*"
       ]
     },
     {
-      "Effect": "Allow",
       "Action": [
         "ec2:DescribeVpcs",
         "elasticloadbalancing:AddTags",
@@ -123,61 +121,61 @@
         "elasticloadbalancing:RegisterTargets",
         "elasticloadbalancing:SetLoadBalancerPoliciesOfListener"
       ],
+      "Effect": "Allow",
       "Resource": [
         "*"
       ]
     },
     {
-      "Effect": "Allow",
       "Action": [
         "iam:ListServerCertificates",
         "iam:GetServerCertificate"
       ],
+      "Effect": "Allow",
       "Resource": [
         "*"
       ]
     },
     {
+      "Action": [
+        "s3:Get*"
+      ],
       "Effect": "Allow",
+      "Resource": "arn:aws:s3:::stellarbot-dev-k8s-state-us-east-2/stellarbot-dev-us-east-2.k8s.local/*"
+    },
+    {
+      "Action": [
+        "s3:GetObject",
+        "s3:DeleteObject",
+        "s3:DeleteObjectVersion",
+        "s3:PutObject"
+      ],
+      "Effect": "Allow",
+      "Resource": "arn:aws:s3:::stellarbot-dev-k8s-state-us-east-2/stellarbot-dev-us-east-2.k8s.local/backups/etcd/main/*"
+    },
+    {
+      "Action": [
+        "s3:GetObject",
+        "s3:DeleteObject",
+        "s3:DeleteObjectVersion",
+        "s3:PutObject"
+      ],
+      "Effect": "Allow",
+      "Resource": "arn:aws:s3:::stellarbot-dev-k8s-state-us-east-2/stellarbot-dev-us-east-2.k8s.local/backups/etcd/events/*"
+    },
+    {
       "Action": [
         "s3:GetBucketLocation",
         "s3:GetEncryptionConfiguration",
         "s3:ListBucket",
         "s3:ListBucketVersions"
       ],
+      "Effect": "Allow",
       "Resource": [
         "arn:aws:s3:::stellarbot-dev-k8s-state-us-east-2"
       ]
     },
     {
-      "Effect": "Allow",
-      "Action": [
-        "s3:Get*"
-      ],
-      "Resource": "arn:aws:s3:::stellarbot-dev-k8s-state-us-east-2/stellarbot-dev-us-east-2.k8s.local/*"
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "s3:GetObject",
-        "s3:DeleteObject",
-        "s3:DeleteObjectVersion",
-        "s3:PutObject"
-      ],
-      "Resource": "arn:aws:s3:::stellarbot-dev-k8s-state-us-east-2/stellarbot-dev-us-east-2.k8s.local/backups/etcd/main/*"
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "s3:GetObject",
-        "s3:DeleteObject",
-        "s3:DeleteObjectVersion",
-        "s3:PutObject"
-      ],
-      "Resource": "arn:aws:s3:::stellarbot-dev-k8s-state-us-east-2/stellarbot-dev-us-east-2.k8s.local/backups/etcd/events/*"
-    },
-    {
-      "Effect": "Allow",
       "Action": [
         "ecr:GetAuthorizationToken",
         "ecr:BatchCheckLayerAvailability",
@@ -187,9 +185,11 @@
         "ecr:ListImages",
         "ecr:BatchGetImage"
       ],
+      "Effect": "Allow",
       "Resource": [
         "*"
       ]
     }
-  ]
+  ],
+  "Version": "2012-10-17"
 }

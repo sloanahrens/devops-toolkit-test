@@ -2,8 +2,6 @@
 
 set -e
 
-source /src/bash-scripts/devops-functions.sh
-validate_source_paths
-source_cluster_env
-validate_aws_config
+source ${ROOT_PATH}/bash-scripts/devops-functions.sh
+run_setup
 pull_kube_config

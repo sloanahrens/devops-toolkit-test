@@ -16,6 +16,134 @@
   },
   "endpoints": [
     {
+      "endpoint": "/api/v0.1/health/app/",
+      "method": "GET",
+      "output_encoding": "no-op",
+      "headers_to_pass": [
+        "*"
+      ],
+      "backend": [
+        {
+          "url_pattern": "/health/app/",
+          "encoding": "no-op",
+          "sd": "static",
+          "method": "GET",
+          "extra_config": {},
+          "disable_host_sanitize": true,
+          "host": [
+            "http://webapp:8000"
+          ]
+        }
+      ]
+    },
+    {
+      "endpoint": "/api/v0.1/health/database/",
+      "method": "GET",
+      "output_encoding": "no-op",
+      "headers_to_pass": [
+        "*"
+      ],
+      "backend": [
+        {
+          "url_pattern": "/health/database/",
+          "encoding": "no-op",
+          "sd": "static",
+          "method": "GET",
+          "extra_config": {},
+          "disable_host_sanitize": true,
+          "host": [
+            "http://webapp:8000"
+          ]
+        }
+      ]
+    },
+    {
+      "endpoint": "/api/v0.1/health/celery/",
+      "method": "GET",
+      "output_encoding": "no-op",
+      "headers_to_pass": [
+        "*"
+      ],
+      "backend": [
+        {
+          "url_pattern": "/health/celery/",
+          "encoding": "no-op",
+          "sd": "static",
+          "method": "GET",
+          "extra_config": {},
+          "disable_host_sanitize": true,
+          "host": [
+            "http://webapp:8000"
+          ]
+        }
+      ]
+    },
+    {
+      "endpoint": "/api/v0.1/health/data/",
+      "method": "GET",
+      "output_encoding": "no-op",
+      "headers_to_pass": [
+        "*"
+      ],
+      "backend": [
+        {
+          "url_pattern": "/health/data/",
+          "encoding": "no-op",
+          "sd": "static",
+          "method": "GET",
+          "extra_config": {},
+          "disable_host_sanitize": true,
+          "host": [
+            "http://webapp:8000"
+          ]
+        }
+      ]
+    },
+    {
+      "endpoint": "/api/v0.1/api/token",
+      "method": "POST",
+      "output_encoding": "no-op",
+      "timeout": "20s",
+      "headers_to_pass": [
+        "*"
+      ],
+      "backend": [
+        {
+          "url_pattern": "/api/token",
+          "encoding": "no-op",
+          "sd": "static",
+          "method": "POST",
+          "extra_config": {},
+          "disable_host_sanitize": true,
+          "host": [
+            "http://webapp:8000"
+          ]
+        }
+      ]
+    },
+    {
+      "endpoint": "/api/v0.1/api/token/refresh",
+      "method": "POST",
+      "output_encoding": "no-op",
+      "timeout": "20s",
+      "headers_to_pass": [
+        "*"
+      ],
+      "backend": [
+        {
+          "url_pattern": "/api/token/refresh",
+          "encoding": "no-op",
+          "sd": "static",
+          "method": "POST",
+          "extra_config": {},
+          "disable_host_sanitize": true,
+          "host": [
+            "http://webapp:8000"
+          ]
+        }
+      ]
+    },
+    {
       "endpoint": "/api/v0.1/ledgers",
       "method": "GET",
       "output_encoding": "no-op",

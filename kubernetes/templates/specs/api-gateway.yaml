@@ -41,7 +41,7 @@ spec:
         - configMapRef:
             name: stack-config
 ---
-apiVersion: networking.k8s.io/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: api-gateway
@@ -50,13 +50,17 @@ metadata:
     type: api-gateway
     service: api-gateway
   annotations:
-    kubernetes.io/ingress.class: "nginx"
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
   rules:
-  - host: STACK_NAME.sloanahrens.com
+  - host: "STACK_NAME.sloanahrens.com"
     http:
       paths:
-      - backend:
-          serviceName: api-gateway
-          servicePort: 9999
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: api-gateway
+            port:
+              number: 9999
