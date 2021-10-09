@@ -4,7 +4,7 @@ locals {
   master_security_group_ids         = [aws_security_group.masters-stellarbot-dev-us-east-2-k8s-local.id]
   masters_role_arn                  = aws_iam_role.masters-stellarbot-dev-us-east-2-k8s-local.arn
   masters_role_name                 = aws_iam_role.masters-stellarbot-dev-us-east-2-k8s-local.name
-  node_autoscaling_group_ids        = [aws_autoscaling_group.nodes-stellarbot-dev-us-east-2-k8s-local.id]
+  node_autoscaling_group_ids        = [aws_autoscaling_group.nodes-us-east-2a-stellarbot-dev-us-east-2-k8s-local.id]
   node_security_group_ids           = [aws_security_group.nodes-stellarbot-dev-us-east-2-k8s-local.id]
   node_subnet_ids                   = [aws_subnet.us-east-2a-stellarbot-dev-us-east-2-k8s-local.id]
   nodes_role_arn                    = aws_iam_role.nodes-stellarbot-dev-us-east-2-k8s-local.arn
@@ -39,7 +39,7 @@ output "masters_role_name" {
 }
 
 output "node_autoscaling_group_ids" {
-  value = [aws_autoscaling_group.nodes-stellarbot-dev-us-east-2-k8s-local.id]
+  value = [aws_autoscaling_group.nodes-us-east-2a-stellarbot-dev-us-east-2-k8s-local.id]
 }
 
 output "node_security_group_ids" {
@@ -90,18 +90,17 @@ provider "aws" {
   region = "us-east-2"
 }
 
-resource "aws_autoscaling_attachment" "master-us-east-2a-masters-stellarbot-dev-us-east-2-k8s-local" {
-  autoscaling_group_name = aws_autoscaling_group.master-us-east-2a-masters-stellarbot-dev-us-east-2-k8s-local.id
-  elb                    = aws_elb.api-stellarbot-dev-us-east-2-k8s-local.id
-}
-
 resource "aws_autoscaling_group" "master-us-east-2a-masters-stellarbot-dev-us-east-2-k8s-local" {
-  enabled_metrics      = ["GroupDesiredCapacity", "GroupInServiceInstances", "GroupMaxSize", "GroupMinSize", "GroupPendingInstances", "GroupStandbyInstances", "GroupTerminatingInstances", "GroupTotalInstances"]
-  launch_configuration = aws_launch_configuration.master-us-east-2a-masters-stellarbot-dev-us-east-2-k8s-local.id
-  max_size             = 1
-  metrics_granularity  = "1Minute"
-  min_size             = 1
-  name                 = "master-us-east-2a.masters.stellarbot-dev-us-east-2.k8s.local"
+  enabled_metrics = ["GroupDesiredCapacity", "GroupInServiceInstances", "GroupMaxSize", "GroupMinSize", "GroupPendingInstances", "GroupStandbyInstances", "GroupTerminatingInstances", "GroupTotalInstances"]
+  launch_template {
+    id      = aws_launch_template.master-us-east-2a-masters-stellarbot-dev-us-east-2-k8s-local.id
+    version = aws_launch_template.master-us-east-2a-masters-stellarbot-dev-us-east-2-k8s-local.latest_version
+  }
+  load_balancers      = [aws_elb.api-stellarbot-dev-us-east-2-k8s-local.id]
+  max_size            = 1
+  metrics_granularity = "1Minute"
+  min_size            = 1
+  name                = "master-us-east-2a.masters.stellarbot-dev-us-east-2.k8s.local"
   tag {
     key                 = "KubernetesCluster"
     propagate_at_launch = true
@@ -116,6 +115,21 @@ resource "aws_autoscaling_group" "master-us-east-2a-masters-stellarbot-dev-us-ea
     key                 = "k8s.io/cluster-autoscaler/node-template/label/kops.k8s.io/instancegroup"
     propagate_at_launch = true
     value               = "master-us-east-2a"
+  }
+  tag {
+    key                 = "k8s.io/cluster-autoscaler/node-template/label/kubernetes.io/role"
+    propagate_at_launch = true
+    value               = "master"
+  }
+  tag {
+    key                 = "k8s.io/cluster-autoscaler/node-template/label/node-role.kubernetes.io/control-plane"
+    propagate_at_launch = true
+    value               = ""
+  }
+  tag {
+    key                 = "k8s.io/cluster-autoscaler/node-template/label/node-role.kubernetes.io/master"
+    propagate_at_launch = true
+    value               = ""
   }
   tag {
     key                 = "k8s.io/role/master"
@@ -135,13 +149,16 @@ resource "aws_autoscaling_group" "master-us-east-2a-masters-stellarbot-dev-us-ea
   vpc_zone_identifier = [aws_subnet.us-east-2a-stellarbot-dev-us-east-2-k8s-local.id]
 }
 
-resource "aws_autoscaling_group" "nodes-stellarbot-dev-us-east-2-k8s-local" {
-  enabled_metrics      = ["GroupDesiredCapacity", "GroupInServiceInstances", "GroupMaxSize", "GroupMinSize", "GroupPendingInstances", "GroupStandbyInstances", "GroupTerminatingInstances", "GroupTotalInstances"]
-  launch_configuration = aws_launch_configuration.nodes-stellarbot-dev-us-east-2-k8s-local.id
-  max_size             = 1
-  metrics_granularity  = "1Minute"
-  min_size             = 1
-  name                 = "nodes.stellarbot-dev-us-east-2.k8s.local"
+resource "aws_autoscaling_group" "nodes-us-east-2a-stellarbot-dev-us-east-2-k8s-local" {
+  enabled_metrics = ["GroupDesiredCapacity", "GroupInServiceInstances", "GroupMaxSize", "GroupMinSize", "GroupPendingInstances", "GroupStandbyInstances", "GroupTerminatingInstances", "GroupTotalInstances"]
+  launch_template {
+    id      = aws_launch_template.nodes-us-east-2a-stellarbot-dev-us-east-2-k8s-local.id
+    version = aws_launch_template.nodes-us-east-2a-stellarbot-dev-us-east-2-k8s-local.latest_version
+  }
+  max_size            = 1
+  metrics_granularity = "1Minute"
+  min_size            = 1
+  name                = "nodes-us-east-2a.stellarbot-dev-us-east-2.k8s.local"
   tag {
     key                 = "KubernetesCluster"
     propagate_at_launch = true
@@ -150,12 +167,22 @@ resource "aws_autoscaling_group" "nodes-stellarbot-dev-us-east-2-k8s-local" {
   tag {
     key                 = "Name"
     propagate_at_launch = true
-    value               = "nodes.stellarbot-dev-us-east-2.k8s.local"
+    value               = "nodes-us-east-2a.stellarbot-dev-us-east-2.k8s.local"
   }
   tag {
     key                 = "k8s.io/cluster-autoscaler/node-template/label/kops.k8s.io/instancegroup"
     propagate_at_launch = true
-    value               = "nodes"
+    value               = "nodes-us-east-2a"
+  }
+  tag {
+    key                 = "k8s.io/cluster-autoscaler/node-template/label/kubernetes.io/role"
+    propagate_at_launch = true
+    value               = "node"
+  }
+  tag {
+    key                 = "k8s.io/cluster-autoscaler/node-template/label/node-role.kubernetes.io/node"
+    propagate_at_launch = true
+    value               = ""
   }
   tag {
     key                 = "k8s.io/role/node"
@@ -165,7 +192,7 @@ resource "aws_autoscaling_group" "nodes-stellarbot-dev-us-east-2-k8s-local" {
   tag {
     key                 = "kops.k8s.io/instancegroup"
     propagate_at_launch = true
-    value               = "nodes"
+    value               = "nodes-us-east-2a"
   }
   tag {
     key                 = "kubernetes.io/cluster/stellarbot-dev-us-east-2.k8s.local"
@@ -177,7 +204,8 @@ resource "aws_autoscaling_group" "nodes-stellarbot-dev-us-east-2-k8s-local" {
 
 resource "aws_ebs_volume" "a-etcd-events-stellarbot-dev-us-east-2-k8s-local" {
   availability_zone = "us-east-2a"
-  encrypted         = false
+  encrypted         = true
+  iops              = 3000
   size              = 20
   tags = {
     "KubernetesCluster"                                        = "stellarbot-dev-us-east-2.k8s.local"
@@ -186,12 +214,14 @@ resource "aws_ebs_volume" "a-etcd-events-stellarbot-dev-us-east-2-k8s-local" {
     "k8s.io/role/master"                                       = "1"
     "kubernetes.io/cluster/stellarbot-dev-us-east-2.k8s.local" = "owned"
   }
-  type = "gp2"
+  throughput = 125
+  type       = "gp3"
 }
 
 resource "aws_ebs_volume" "a-etcd-main-stellarbot-dev-us-east-2-k8s-local" {
   availability_zone = "us-east-2a"
-  encrypted         = false
+  encrypted         = true
+  iops              = 3000
   size              = 20
   tags = {
     "KubernetesCluster"                                        = "stellarbot-dev-us-east-2.k8s.local"
@@ -200,7 +230,8 @@ resource "aws_ebs_volume" "a-etcd-main-stellarbot-dev-us-east-2-k8s-local" {
     "k8s.io/role/master"                                       = "1"
     "kubernetes.io/cluster/stellarbot-dev-us-east-2.k8s.local" = "owned"
   }
-  type = "gp2"
+  throughput = 125
+  type       = "gp3"
 }
 
 resource "aws_eip" "us-east-2a-stellarbot-dev-us-east-2-k8s-local" {
@@ -223,11 +254,10 @@ resource "aws_elb" "api-stellarbot-dev-us-east-2-k8s-local" {
   }
   idle_timeout = 300
   listener {
-    instance_port      = 443
-    instance_protocol  = "TCP"
-    lb_port            = 443
-    lb_protocol        = "TCP"
-    ssl_certificate_id = ""
+    instance_port     = 443
+    instance_protocol = "TCP"
+    lb_port           = 443
+    lb_protocol       = "TCP"
   }
   name            = "api-stellarbot-dev-us-eas-73u75n"
   security_groups = [aws_security_group.api-elb-stellarbot-dev-us-east-2-k8s-local.id]
@@ -264,11 +294,21 @@ resource "aws_iam_role_policy" "nodes-stellarbot-dev-us-east-2-k8s-local" {
 resource "aws_iam_role" "masters-stellarbot-dev-us-east-2-k8s-local" {
   assume_role_policy = file("${path.module}/data/aws_iam_role_masters.stellarbot-dev-us-east-2.k8s.local_policy")
   name               = "masters.stellarbot-dev-us-east-2.k8s.local"
+  tags = {
+    "KubernetesCluster"                                        = "stellarbot-dev-us-east-2.k8s.local"
+    "Name"                                                     = "masters.stellarbot-dev-us-east-2.k8s.local"
+    "kubernetes.io/cluster/stellarbot-dev-us-east-2.k8s.local" = "owned"
+  }
 }
 
 resource "aws_iam_role" "nodes-stellarbot-dev-us-east-2-k8s-local" {
   assume_role_policy = file("${path.module}/data/aws_iam_role_nodes.stellarbot-dev-us-east-2.k8s.local_policy")
   name               = "nodes.stellarbot-dev-us-east-2.k8s.local"
+  tags = {
+    "KubernetesCluster"                                        = "stellarbot-dev-us-east-2.k8s.local"
+    "Name"                                                     = "nodes.stellarbot-dev-us-east-2.k8s.local"
+    "kubernetes.io/cluster/stellarbot-dev-us-east-2.k8s.local" = "owned"
+  }
 }
 
 resource "aws_internet_gateway" "stellarbot-dev-us-east-2-k8s-local" {
@@ -280,49 +320,159 @@ resource "aws_internet_gateway" "stellarbot-dev-us-east-2-k8s-local" {
   vpc_id = aws_vpc.stellarbot-dev-us-east-2-k8s-local.id
 }
 
-resource "aws_key_pair" "kubernetes-stellarbot-dev-us-east-2-k8s-local-3c696872dda0d8c74868f68979ea2f3d" {
-  key_name   = "kubernetes.stellarbot-dev-us-east-2.k8s.local-3c:69:68:72:dd:a0:d8:c7:48:68:f6:89:79:ea:2f:3d"
-  public_key = file("${path.module}/data/aws_key_pair_kubernetes.stellarbot-dev-us-east-2.k8s.local-3c696872dda0d8c74868f68979ea2f3d_public_key")
+resource "aws_key_pair" "kubernetes-stellarbot-dev-us-east-2-k8s-local-a8211f3c64d3407d7333a07a092f3780" {
+  key_name   = "kubernetes.stellarbot-dev-us-east-2.k8s.local-a8:21:1f:3c:64:d3:40:7d:73:33:a0:7a:09:2f:37:80"
+  public_key = file("${path.module}/data/aws_key_pair_kubernetes.stellarbot-dev-us-east-2.k8s.local-a8211f3c64d3407d7333a07a092f3780_public_key")
+  tags = {
+    "KubernetesCluster"                                        = "stellarbot-dev-us-east-2.k8s.local"
+    "Name"                                                     = "stellarbot-dev-us-east-2.k8s.local"
+    "kubernetes.io/cluster/stellarbot-dev-us-east-2.k8s.local" = "owned"
+  }
 }
 
-resource "aws_launch_configuration" "master-us-east-2a-masters-stellarbot-dev-us-east-2-k8s-local" {
-  associate_public_ip_address = false
-  enable_monitoring           = false
-  iam_instance_profile        = aws_iam_instance_profile.masters-stellarbot-dev-us-east-2-k8s-local.id
-  image_id                    = "ami-0b287e7832eb862f8"
-  instance_type               = "r5.xlarge"
-  key_name                    = aws_key_pair.kubernetes-stellarbot-dev-us-east-2-k8s-local-3c696872dda0d8c74868f68979ea2f3d.id
+resource "aws_launch_template" "master-us-east-2a-masters-stellarbot-dev-us-east-2-k8s-local" {
+  block_device_mappings {
+    device_name = "/dev/sda1"
+    ebs {
+      delete_on_termination = true
+      encrypted             = true
+      iops                  = 3000
+      throughput            = 125
+      volume_size           = 64
+      volume_type           = "gp3"
+    }
+  }
+  iam_instance_profile {
+    name = aws_iam_instance_profile.masters-stellarbot-dev-us-east-2-k8s-local.id
+  }
+  image_id      = "ami-0a5a9780e8617afe7"
+  instance_type = "r5.xlarge"
+  key_name      = aws_key_pair.kubernetes-stellarbot-dev-us-east-2-k8s-local-a8211f3c64d3407d7333a07a092f3780.id
   lifecycle {
     create_before_destroy = true
   }
-  name_prefix = "master-us-east-2a.masters.stellarbot-dev-us-east-2.k8s.local-"
-  root_block_device {
-    delete_on_termination = true
-    volume_size           = 64
-    volume_type           = "gp2"
+  metadata_options {
+    http_endpoint               = "enabled"
+    http_put_response_hop_limit = 1
+    http_tokens                 = "optional"
   }
-  security_groups = [aws_security_group.masters-stellarbot-dev-us-east-2-k8s-local.id]
-  user_data       = file("${path.module}/data/aws_launch_configuration_master-us-east-2a.masters.stellarbot-dev-us-east-2.k8s.local_user_data")
+  name = "master-us-east-2a.masters.stellarbot-dev-us-east-2.k8s.local"
+  network_interfaces {
+    associate_public_ip_address = false
+    delete_on_termination       = true
+    security_groups             = [aws_security_group.masters-stellarbot-dev-us-east-2-k8s-local.id]
+  }
+  tag_specifications {
+    resource_type = "instance"
+    tags = {
+      "KubernetesCluster"                                                                   = "stellarbot-dev-us-east-2.k8s.local"
+      "Name"                                                                                = "master-us-east-2a.masters.stellarbot-dev-us-east-2.k8s.local"
+      "k8s.io/cluster-autoscaler/node-template/label/kops.k8s.io/instancegroup"             = "master-us-east-2a"
+      "k8s.io/cluster-autoscaler/node-template/label/kubernetes.io/role"                    = "master"
+      "k8s.io/cluster-autoscaler/node-template/label/node-role.kubernetes.io/control-plane" = ""
+      "k8s.io/cluster-autoscaler/node-template/label/node-role.kubernetes.io/master"        = ""
+      "k8s.io/role/master"                                                                  = "1"
+      "kops.k8s.io/instancegroup"                                                           = "master-us-east-2a"
+      "kubernetes.io/cluster/stellarbot-dev-us-east-2.k8s.local"                            = "owned"
+    }
+  }
+  tag_specifications {
+    resource_type = "volume"
+    tags = {
+      "KubernetesCluster"                                                                   = "stellarbot-dev-us-east-2.k8s.local"
+      "Name"                                                                                = "master-us-east-2a.masters.stellarbot-dev-us-east-2.k8s.local"
+      "k8s.io/cluster-autoscaler/node-template/label/kops.k8s.io/instancegroup"             = "master-us-east-2a"
+      "k8s.io/cluster-autoscaler/node-template/label/kubernetes.io/role"                    = "master"
+      "k8s.io/cluster-autoscaler/node-template/label/node-role.kubernetes.io/control-plane" = ""
+      "k8s.io/cluster-autoscaler/node-template/label/node-role.kubernetes.io/master"        = ""
+      "k8s.io/role/master"                                                                  = "1"
+      "kops.k8s.io/instancegroup"                                                           = "master-us-east-2a"
+      "kubernetes.io/cluster/stellarbot-dev-us-east-2.k8s.local"                            = "owned"
+    }
+  }
+  tags = {
+    "KubernetesCluster"                                                                   = "stellarbot-dev-us-east-2.k8s.local"
+    "Name"                                                                                = "master-us-east-2a.masters.stellarbot-dev-us-east-2.k8s.local"
+    "k8s.io/cluster-autoscaler/node-template/label/kops.k8s.io/instancegroup"             = "master-us-east-2a"
+    "k8s.io/cluster-autoscaler/node-template/label/kubernetes.io/role"                    = "master"
+    "k8s.io/cluster-autoscaler/node-template/label/node-role.kubernetes.io/control-plane" = ""
+    "k8s.io/cluster-autoscaler/node-template/label/node-role.kubernetes.io/master"        = ""
+    "k8s.io/role/master"                                                                  = "1"
+    "kops.k8s.io/instancegroup"                                                           = "master-us-east-2a"
+    "kubernetes.io/cluster/stellarbot-dev-us-east-2.k8s.local"                            = "owned"
+  }
+  user_data = filebase64("${path.module}/data/aws_launch_template_master-us-east-2a.masters.stellarbot-dev-us-east-2.k8s.local_user_data")
 }
 
-resource "aws_launch_configuration" "nodes-stellarbot-dev-us-east-2-k8s-local" {
-  associate_public_ip_address = false
-  enable_monitoring           = false
-  iam_instance_profile        = aws_iam_instance_profile.nodes-stellarbot-dev-us-east-2-k8s-local.id
-  image_id                    = "ami-0b287e7832eb862f8"
-  instance_type               = "r5.large"
-  key_name                    = aws_key_pair.kubernetes-stellarbot-dev-us-east-2-k8s-local-3c696872dda0d8c74868f68979ea2f3d.id
+resource "aws_launch_template" "nodes-us-east-2a-stellarbot-dev-us-east-2-k8s-local" {
+  block_device_mappings {
+    device_name = "/dev/sda1"
+    ebs {
+      delete_on_termination = true
+      encrypted             = true
+      iops                  = 3000
+      throughput            = 125
+      volume_size           = 128
+      volume_type           = "gp3"
+    }
+  }
+  iam_instance_profile {
+    name = aws_iam_instance_profile.nodes-stellarbot-dev-us-east-2-k8s-local.id
+  }
+  image_id      = "ami-0a5a9780e8617afe7"
+  instance_type = "r5.large"
+  key_name      = aws_key_pair.kubernetes-stellarbot-dev-us-east-2-k8s-local-a8211f3c64d3407d7333a07a092f3780.id
   lifecycle {
     create_before_destroy = true
   }
-  name_prefix = "nodes.stellarbot-dev-us-east-2.k8s.local-"
-  root_block_device {
-    delete_on_termination = true
-    volume_size           = 128
-    volume_type           = "gp2"
+  metadata_options {
+    http_endpoint               = "enabled"
+    http_put_response_hop_limit = 1
+    http_tokens                 = "optional"
   }
-  security_groups = [aws_security_group.nodes-stellarbot-dev-us-east-2-k8s-local.id]
-  user_data       = file("${path.module}/data/aws_launch_configuration_nodes.stellarbot-dev-us-east-2.k8s.local_user_data")
+  name = "nodes-us-east-2a.stellarbot-dev-us-east-2.k8s.local"
+  network_interfaces {
+    associate_public_ip_address = false
+    delete_on_termination       = true
+    security_groups             = [aws_security_group.nodes-stellarbot-dev-us-east-2-k8s-local.id]
+  }
+  tag_specifications {
+    resource_type = "instance"
+    tags = {
+      "KubernetesCluster"                                                          = "stellarbot-dev-us-east-2.k8s.local"
+      "Name"                                                                       = "nodes-us-east-2a.stellarbot-dev-us-east-2.k8s.local"
+      "k8s.io/cluster-autoscaler/node-template/label/kops.k8s.io/instancegroup"    = "nodes-us-east-2a"
+      "k8s.io/cluster-autoscaler/node-template/label/kubernetes.io/role"           = "node"
+      "k8s.io/cluster-autoscaler/node-template/label/node-role.kubernetes.io/node" = ""
+      "k8s.io/role/node"                                                           = "1"
+      "kops.k8s.io/instancegroup"                                                  = "nodes-us-east-2a"
+      "kubernetes.io/cluster/stellarbot-dev-us-east-2.k8s.local"                   = "owned"
+    }
+  }
+  tag_specifications {
+    resource_type = "volume"
+    tags = {
+      "KubernetesCluster"                                                          = "stellarbot-dev-us-east-2.k8s.local"
+      "Name"                                                                       = "nodes-us-east-2a.stellarbot-dev-us-east-2.k8s.local"
+      "k8s.io/cluster-autoscaler/node-template/label/kops.k8s.io/instancegroup"    = "nodes-us-east-2a"
+      "k8s.io/cluster-autoscaler/node-template/label/kubernetes.io/role"           = "node"
+      "k8s.io/cluster-autoscaler/node-template/label/node-role.kubernetes.io/node" = ""
+      "k8s.io/role/node"                                                           = "1"
+      "kops.k8s.io/instancegroup"                                                  = "nodes-us-east-2a"
+      "kubernetes.io/cluster/stellarbot-dev-us-east-2.k8s.local"                   = "owned"
+    }
+  }
+  tags = {
+    "KubernetesCluster"                                                          = "stellarbot-dev-us-east-2.k8s.local"
+    "Name"                                                                       = "nodes-us-east-2a.stellarbot-dev-us-east-2.k8s.local"
+    "k8s.io/cluster-autoscaler/node-template/label/kops.k8s.io/instancegroup"    = "nodes-us-east-2a"
+    "k8s.io/cluster-autoscaler/node-template/label/kubernetes.io/role"           = "node"
+    "k8s.io/cluster-autoscaler/node-template/label/node-role.kubernetes.io/node" = ""
+    "k8s.io/role/node"                                                           = "1"
+    "kops.k8s.io/instancegroup"                                                  = "nodes-us-east-2a"
+    "kubernetes.io/cluster/stellarbot-dev-us-east-2.k8s.local"                   = "owned"
+  }
+  user_data = filebase64("${path.module}/data/aws_launch_template_nodes-us-east-2a.stellarbot-dev-us-east-2.k8s.local_user_data")
 }
 
 resource "aws_nat_gateway" "us-east-2a-stellarbot-dev-us-east-2-k8s-local" {
@@ -377,34 +527,34 @@ resource "aws_route" "route-private-us-east-2a-0-0-0-0--0" {
   route_table_id         = aws_route_table.private-us-east-2a-stellarbot-dev-us-east-2-k8s-local.id
 }
 
-resource "aws_security_group_rule" "all-master-to-master" {
-  from_port                = 0
-  protocol                 = "-1"
-  security_group_id        = aws_security_group.masters-stellarbot-dev-us-east-2-k8s-local.id
-  source_security_group_id = aws_security_group.masters-stellarbot-dev-us-east-2-k8s-local.id
-  to_port                  = 0
-  type                     = "ingress"
+resource "aws_security_group_rule" "from-0-0-0-0--0-ingress-tcp-22to22-masters-stellarbot-dev-us-east-2-k8s-local" {
+  cidr_blocks       = ["0.0.0.0/0"]
+  from_port         = 22
+  protocol          = "tcp"
+  security_group_id = aws_security_group.masters-stellarbot-dev-us-east-2-k8s-local.id
+  to_port           = 22
+  type              = "ingress"
 }
 
-resource "aws_security_group_rule" "all-master-to-node" {
-  from_port                = 0
-  protocol                 = "-1"
-  security_group_id        = aws_security_group.nodes-stellarbot-dev-us-east-2-k8s-local.id
-  source_security_group_id = aws_security_group.masters-stellarbot-dev-us-east-2-k8s-local.id
-  to_port                  = 0
-  type                     = "ingress"
+resource "aws_security_group_rule" "from-0-0-0-0--0-ingress-tcp-22to22-nodes-stellarbot-dev-us-east-2-k8s-local" {
+  cidr_blocks       = ["0.0.0.0/0"]
+  from_port         = 22
+  protocol          = "tcp"
+  security_group_id = aws_security_group.nodes-stellarbot-dev-us-east-2-k8s-local.id
+  to_port           = 22
+  type              = "ingress"
 }
 
-resource "aws_security_group_rule" "all-node-to-node" {
-  from_port                = 0
-  protocol                 = "-1"
-  security_group_id        = aws_security_group.nodes-stellarbot-dev-us-east-2-k8s-local.id
-  source_security_group_id = aws_security_group.nodes-stellarbot-dev-us-east-2-k8s-local.id
-  to_port                  = 0
-  type                     = "ingress"
+resource "aws_security_group_rule" "from-0-0-0-0--0-ingress-tcp-443to443-api-elb-stellarbot-dev-us-east-2-k8s-local" {
+  cidr_blocks       = ["0.0.0.0/0"]
+  from_port         = 443
+  protocol          = "tcp"
+  security_group_id = aws_security_group.api-elb-stellarbot-dev-us-east-2-k8s-local.id
+  to_port           = 443
+  type              = "ingress"
 }
 
-resource "aws_security_group_rule" "api-elb-egress" {
+resource "aws_security_group_rule" "from-api-elb-stellarbot-dev-us-east-2-k8s-local-egress-all-0to0-0-0-0-0--0" {
   cidr_blocks       = ["0.0.0.0/0"]
   from_port         = 0
   protocol          = "-1"
@@ -413,13 +563,94 @@ resource "aws_security_group_rule" "api-elb-egress" {
   type              = "egress"
 }
 
-resource "aws_security_group_rule" "https-api-elb-0-0-0-0--0" {
+resource "aws_security_group_rule" "from-masters-stellarbot-dev-us-east-2-k8s-local-egress-all-0to0-0-0-0-0--0" {
   cidr_blocks       = ["0.0.0.0/0"]
-  from_port         = 443
-  protocol          = "tcp"
-  security_group_id = aws_security_group.api-elb-stellarbot-dev-us-east-2-k8s-local.id
-  to_port           = 443
-  type              = "ingress"
+  from_port         = 0
+  protocol          = "-1"
+  security_group_id = aws_security_group.masters-stellarbot-dev-us-east-2-k8s-local.id
+  to_port           = 0
+  type              = "egress"
+}
+
+resource "aws_security_group_rule" "from-masters-stellarbot-dev-us-east-2-k8s-local-ingress-all-0to0-masters-stellarbot-dev-us-east-2-k8s-local" {
+  from_port                = 0
+  protocol                 = "-1"
+  security_group_id        = aws_security_group.masters-stellarbot-dev-us-east-2-k8s-local.id
+  source_security_group_id = aws_security_group.masters-stellarbot-dev-us-east-2-k8s-local.id
+  to_port                  = 0
+  type                     = "ingress"
+}
+
+resource "aws_security_group_rule" "from-masters-stellarbot-dev-us-east-2-k8s-local-ingress-all-0to0-nodes-stellarbot-dev-us-east-2-k8s-local" {
+  from_port                = 0
+  protocol                 = "-1"
+  security_group_id        = aws_security_group.nodes-stellarbot-dev-us-east-2-k8s-local.id
+  source_security_group_id = aws_security_group.masters-stellarbot-dev-us-east-2-k8s-local.id
+  to_port                  = 0
+  type                     = "ingress"
+}
+
+resource "aws_security_group_rule" "from-nodes-stellarbot-dev-us-east-2-k8s-local-egress-all-0to0-0-0-0-0--0" {
+  cidr_blocks       = ["0.0.0.0/0"]
+  from_port         = 0
+  protocol          = "-1"
+  security_group_id = aws_security_group.nodes-stellarbot-dev-us-east-2-k8s-local.id
+  to_port           = 0
+  type              = "egress"
+}
+
+resource "aws_security_group_rule" "from-nodes-stellarbot-dev-us-east-2-k8s-local-ingress-4-0to0-masters-stellarbot-dev-us-east-2-k8s-local" {
+  from_port                = 0
+  protocol                 = "4"
+  security_group_id        = aws_security_group.masters-stellarbot-dev-us-east-2-k8s-local.id
+  source_security_group_id = aws_security_group.nodes-stellarbot-dev-us-east-2-k8s-local.id
+  to_port                  = 65535
+  type                     = "ingress"
+}
+
+resource "aws_security_group_rule" "from-nodes-stellarbot-dev-us-east-2-k8s-local-ingress-all-0to0-nodes-stellarbot-dev-us-east-2-k8s-local" {
+  from_port                = 0
+  protocol                 = "-1"
+  security_group_id        = aws_security_group.nodes-stellarbot-dev-us-east-2-k8s-local.id
+  source_security_group_id = aws_security_group.nodes-stellarbot-dev-us-east-2-k8s-local.id
+  to_port                  = 0
+  type                     = "ingress"
+}
+
+resource "aws_security_group_rule" "from-nodes-stellarbot-dev-us-east-2-k8s-local-ingress-tcp-1to2379-masters-stellarbot-dev-us-east-2-k8s-local" {
+  from_port                = 1
+  protocol                 = "tcp"
+  security_group_id        = aws_security_group.masters-stellarbot-dev-us-east-2-k8s-local.id
+  source_security_group_id = aws_security_group.nodes-stellarbot-dev-us-east-2-k8s-local.id
+  to_port                  = 2379
+  type                     = "ingress"
+}
+
+resource "aws_security_group_rule" "from-nodes-stellarbot-dev-us-east-2-k8s-local-ingress-tcp-2382to4000-masters-stellarbot-dev-us-east-2-k8s-local" {
+  from_port                = 2382
+  protocol                 = "tcp"
+  security_group_id        = aws_security_group.masters-stellarbot-dev-us-east-2-k8s-local.id
+  source_security_group_id = aws_security_group.nodes-stellarbot-dev-us-east-2-k8s-local.id
+  to_port                  = 4000
+  type                     = "ingress"
+}
+
+resource "aws_security_group_rule" "from-nodes-stellarbot-dev-us-east-2-k8s-local-ingress-tcp-4003to65535-masters-stellarbot-dev-us-east-2-k8s-local" {
+  from_port                = 4003
+  protocol                 = "tcp"
+  security_group_id        = aws_security_group.masters-stellarbot-dev-us-east-2-k8s-local.id
+  source_security_group_id = aws_security_group.nodes-stellarbot-dev-us-east-2-k8s-local.id
+  to_port                  = 65535
+  type                     = "ingress"
+}
+
+resource "aws_security_group_rule" "from-nodes-stellarbot-dev-us-east-2-k8s-local-ingress-udp-1to65535-masters-stellarbot-dev-us-east-2-k8s-local" {
+  from_port                = 1
+  protocol                 = "udp"
+  security_group_id        = aws_security_group.masters-stellarbot-dev-us-east-2-k8s-local.id
+  source_security_group_id = aws_security_group.nodes-stellarbot-dev-us-east-2-k8s-local.id
+  to_port                  = 65535
+  type                     = "ingress"
 }
 
 resource "aws_security_group_rule" "https-elb-to-master" {
@@ -437,87 +668,6 @@ resource "aws_security_group_rule" "icmp-pmtu-api-elb-0-0-0-0--0" {
   protocol          = "icmp"
   security_group_id = aws_security_group.api-elb-stellarbot-dev-us-east-2-k8s-local.id
   to_port           = 4
-  type              = "ingress"
-}
-
-resource "aws_security_group_rule" "master-egress" {
-  cidr_blocks       = ["0.0.0.0/0"]
-  from_port         = 0
-  protocol          = "-1"
-  security_group_id = aws_security_group.masters-stellarbot-dev-us-east-2-k8s-local.id
-  to_port           = 0
-  type              = "egress"
-}
-
-resource "aws_security_group_rule" "node-egress" {
-  cidr_blocks       = ["0.0.0.0/0"]
-  from_port         = 0
-  protocol          = "-1"
-  security_group_id = aws_security_group.nodes-stellarbot-dev-us-east-2-k8s-local.id
-  to_port           = 0
-  type              = "egress"
-}
-
-resource "aws_security_group_rule" "node-to-master-protocol-ipip" {
-  from_port                = 0
-  protocol                 = "4"
-  security_group_id        = aws_security_group.masters-stellarbot-dev-us-east-2-k8s-local.id
-  source_security_group_id = aws_security_group.nodes-stellarbot-dev-us-east-2-k8s-local.id
-  to_port                  = 65535
-  type                     = "ingress"
-}
-
-resource "aws_security_group_rule" "node-to-master-tcp-1-2379" {
-  from_port                = 1
-  protocol                 = "tcp"
-  security_group_id        = aws_security_group.masters-stellarbot-dev-us-east-2-k8s-local.id
-  source_security_group_id = aws_security_group.nodes-stellarbot-dev-us-east-2-k8s-local.id
-  to_port                  = 2379
-  type                     = "ingress"
-}
-
-resource "aws_security_group_rule" "node-to-master-tcp-2382-4001" {
-  from_port                = 2382
-  protocol                 = "tcp"
-  security_group_id        = aws_security_group.masters-stellarbot-dev-us-east-2-k8s-local.id
-  source_security_group_id = aws_security_group.nodes-stellarbot-dev-us-east-2-k8s-local.id
-  to_port                  = 4001
-  type                     = "ingress"
-}
-
-resource "aws_security_group_rule" "node-to-master-tcp-4003-65535" {
-  from_port                = 4003
-  protocol                 = "tcp"
-  security_group_id        = aws_security_group.masters-stellarbot-dev-us-east-2-k8s-local.id
-  source_security_group_id = aws_security_group.nodes-stellarbot-dev-us-east-2-k8s-local.id
-  to_port                  = 65535
-  type                     = "ingress"
-}
-
-resource "aws_security_group_rule" "node-to-master-udp-1-65535" {
-  from_port                = 1
-  protocol                 = "udp"
-  security_group_id        = aws_security_group.masters-stellarbot-dev-us-east-2-k8s-local.id
-  source_security_group_id = aws_security_group.nodes-stellarbot-dev-us-east-2-k8s-local.id
-  to_port                  = 65535
-  type                     = "ingress"
-}
-
-resource "aws_security_group_rule" "ssh-external-to-master-0-0-0-0--0" {
-  cidr_blocks       = ["0.0.0.0/0"]
-  from_port         = 22
-  protocol          = "tcp"
-  security_group_id = aws_security_group.masters-stellarbot-dev-us-east-2-k8s-local.id
-  to_port           = 22
-  type              = "ingress"
-}
-
-resource "aws_security_group_rule" "ssh-external-to-node-0-0-0-0--0" {
-  cidr_blocks       = ["0.0.0.0/0"]
-  from_port         = 22
-  protocol          = "tcp"
-  security_group_id = aws_security_group.nodes-stellarbot-dev-us-east-2-k8s-local.id
-  to_port           = 22
   type              = "ingress"
 }
 
@@ -607,5 +757,11 @@ resource "aws_vpc" "stellarbot-dev-us-east-2-k8s-local" {
 }
 
 terraform {
-  required_version = ">= 0.12.0"
+  required_version = ">= 0.12.26"
+  required_providers {
+    aws = {
+      "source"  = "hashicorp/aws"
+      "version" = ">= 2.46.0"
+    }
+  }
 }

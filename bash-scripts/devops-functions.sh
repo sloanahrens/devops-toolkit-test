@@ -36,9 +36,8 @@ function validate_source_paths {
 function source_cluster_env {
     if [ ! -f "${SOURCE_PATH}/environment.sh" ]; then
         echo "SOURCE_PATH: ${SOURCE_PATH}"
-        echo "*** Environment file ${SOURCE_PATH}/cluster/config.sh does not exist!"
-        # exit_with_error
-        return
+        echo "*** Environment file ${SOURCE_PATH}/environment.sh does not exist! Exiting."
+        exit_with_error
     fi
     source ${SOURCE_PATH}/environment.sh
 }
@@ -59,6 +58,21 @@ function validate_aws_config {
     fi
     if test -z "${AWS_SECRET_ACCESS_KEY}"; then
           echo "*** AWS_SECRET_ACCESS_KEY not found! Exiting."
+          exit_with_error
+    fi
+}
+
+function validate_ecr_config {
+    if test -z "${ECR_REGION}"; then
+          echo "*** ECR_REGION not found! Exiting."
+          exit_with_error
+    fi
+    if test -z "${ECR_ID}"; then
+          echo "*** ECR_ID not found! Exiting."
+          exit_with_error
+    fi
+    if test -z "${IMAGE_TAG}"; then
+          echo "*** IMAGE_TAG not found! Exiting."
           exit_with_error
     fi
 }

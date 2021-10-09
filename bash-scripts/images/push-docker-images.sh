@@ -2,8 +2,11 @@
 
 set -e
 
-# ECR_REGION=${ECR_REGION-'us-east-2'}
-# ECR_ID=${ECR_ID-'421987441365'}
+# setup
+source ${ROOT_PATH}/bash-scripts/devops-functions.sh
+source ${ROOT_PATH}/docker/repo.sh
+validate_ecr_config
+
 
 $(aws ecr get-login --no-include-email --region ${ECR_REGION})
 

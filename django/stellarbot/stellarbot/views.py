@@ -9,7 +9,7 @@ from celery.exceptions import TimeoutError
 from rest_framework.status import HTTP_412_PRECONDITION_FAILED
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.authentication import SessionAuthentication
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.permissions import AllowAny
 
 from api.tasks import celery_worker_health_check
@@ -38,8 +38,7 @@ def postgres_error_response(err):
 
 
 class DatabaseHealthCheckView(APIView):
-    authentication_classes = (SessionAuthentication,)
-    permission_classes = (AllowAny,)
+    permission_classes = (IsAuthenticated,)
 
     def get(self, request, *args, **kwargs):
         try:
@@ -51,8 +50,7 @@ class DatabaseHealthCheckView(APIView):
 
 
 class CeleryHealthCheckView(APIView):
-    authentication_classes = (SessionAuthentication,)
-    permission_classes = (AllowAny,)
+    permission_classes = (IsAuthenticated,)
 
     def get(self, request, *args, **kwargs):
         current_datetime = now().strftime('%c')
@@ -75,8 +73,7 @@ class CeleryHealthCheckView(APIView):
         return Response({'status': 'healthy'})
 
 class DataLoadedCheckView(APIView):
-    authentication_classes = (SessionAuthentication,)
-    permission_classes = (AllowAny,)
+    permission_classes = (IsAuthenticated,)
 
     def get(self, request, *args, **kwargs):
         try:

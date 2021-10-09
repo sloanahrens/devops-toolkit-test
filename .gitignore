@@ -151,3 +151,5 @@ kubecfg.yaml
 .terraform
 .terraform.tfstate.lock.info
 _static
+cluster_updating_status.txt
+.terraform.lock.hcl

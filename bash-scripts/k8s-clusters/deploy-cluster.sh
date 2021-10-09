@@ -5,12 +5,37 @@ set -e
 #####
 # local scope functions
 
-function run_remote_state_terraform {
+function get_cluster_info_json {
+
+    cd ${SOURCE_PATH}/cluster
+    terraform init >/dev/null
+    CLUSTER_INFO=$(terraform output -json)
+}
+
+function check_ssh_key {
+
+    if test -f "${SOURCE_PATH}/${AWS_KEY_NAME}.pem"; then
+        echo "** Key file ${SOURCE_PATH}/${AWS_KEY_NAME}.pem found."
+        ssh-keygen -y -f ${SOURCE_PATH}/${AWS_KEY_NAME}.pem > ${SOURCE_PATH}/cluster/${AWS_KEY_NAME}.pub
+    else
+        echo "*** Key file ${SOURCE_PATH}/${AWS_KEY_NAME}.pem does not exist! Exiting."
+        exit_with_error
+    fi
+}
+
+function apply_remote_state_resources_template {
 
     cat ${ROOT_PATH}/kubernetes/templates/remote_state_resources.tf \
       | sed -e "s@REGION@${REGION}@g" \
       | sed -e "s@CLUSTER_TYPE@${CLUSTER_TYPE}@g" \
       > ${SOURCE_PATH}/remote-state/remote_state_resources.tf
+}
+
+function run_remote_state_terraform {
+
+    echo "Running remote-state terraform code..."
+
+    apply_remote_state_resources_template
 
     cd ${SOURCE_PATH}/remote-state
     
@@ -18,41 +43,46 @@ function run_remote_state_terraform {
     terraform apply --auto-approve
 }
 
-function run_cluster_terraform {
+function apply_cluster_infrastructure_templates {
 
+    # reference to terraform remote state:
     cat ${ROOT_PATH}/kubernetes/templates/remote_state.tf \
       | sed -e "s@REGION@${REGION}@g" \
       | sed -e "s@CLUSTER_TYPE@${CLUSTER_TYPE}@g" \
       > ${SOURCE_PATH}/cluster/remote_state.tf
 
+    # need to add some things to k8s node IAM policy:
     cat ${ROOT_PATH}/kubernetes/templates/node_iam_policy.txt \
       | sed -e "s@R53_HOSTED_ZONE@${R53_HOSTED_ZONE}@g" \
       | sed -e "s@BUCKET_NAME@${BUCKET_NAME}@g" \
       | sed -e "s@CLUSTER_NAME@${CLUSTER_NAME}@g" \
       > ${SOURCE_PATH}/cluster/data/aws_iam_role_policy_nodes.${CLUSTER_NAME}_policy
 
+    # RDS terraform template will get used here
+    ##
+}
+
+function run_cluster_terraform {
+
+    echo "Running cluster terraform code..."
+
+    apply_cluster_infrastructure_templates
+
     cd ${SOURCE_PATH}/cluster
 
     terraform init
     terraform plan
     terraform apply --auto-approve
+
+    sleep 1
 }
 
-function create_cluster {
+function create_kops_cluster {
 
     cd ${SOURCE_PATH}/cluster
 
-    if test -f "$PWD/${AWS_KEY_NAME}.pem"; then
-        echo "** Key file $PWD/${AWS_KEY_NAME}.pem found."
-        ssh-keygen -y -f $PWD/${AWS_KEY_NAME}.pem > $PWD/${AWS_KEY_NAME}.pub
-    else
-        echo "*** Key file $PWD/${AWS_KEY_NAME}.pem does not exist! Exiting."
-        exit_with_error
-    fi
+    echo "** Creating ${CLUSTER_NAME} in ${REGION} with kops..."
 
-    echo "** Deploying ${CLUSTER_NAME} in ${REGION}."
-
-    # always start with 3 nodes, node auto-scale groups will be added
     kops create cluster \
         --cloud=aws \
         --name ${CLUSTER_NAME} \
@@ -71,122 +101,124 @@ function create_cluster {
         --out=. \
         --target=terraform
 
-    sleep 5
-
     run_cluster_terraform
+    export_kubeconfig
+}
 
-    sleep 5
+function export_kubeconfig {
+
+    echo "Exporting Kube-config..."
 
     kops export kubecfg --name ${CLUSTER_NAME} --state s3://${BUCKET_NAME}
+
+    # push kubeconfig to private s3 bucket
+    aws s3 cp ${SOURCE_PATH}/cluster/kubecfg.yaml s3://${BUCKET_NAME}/kubecfg.yaml
 }
 
 function update_cluster {
 
-    ## DANGER this needs work
+    echo "Updating cluster..."
 
     cd ${SOURCE_PATH}/cluster
 
-    # need to figure out why this is necessary; it removes the load-balancer from the master ASG for some reason
     kops update cluster ${CLUSTER_NAME} --state s3://${BUCKET_NAME} --target=terraform --out=.
 
-    # running terraform screws up the cluster because the previous step removes the load-balancer
-    # run_cluster_terraform
-    # this is only here to keep the code in source-control matching the deployed resources, since kops update overwrites the IAM policy doc
-    cat ${ROOT_PATH}/kubernetes/templates/node_iam_policy.txt \
-      | sed -e "s@R53_HOSTED_ZONE@${R53_HOSTED_ZONE}@g" \
-      | sed -e "s@BUCKET_NAME@${BUCKET_NAME}@g" \
-      | sed -e "s@CLUSTER_NAME@${CLUSTER_NAME}@g" \
-      > ${SOURCE_PATH}/cluster/data/aws_iam_role_policy_nodes.${CLUSTER_NAME}_policy
+    sleep 1
 
-    sleep 5
+    run_cluster_terraform
 
     kops rolling-update cluster --name ${CLUSTER_NAME} --state s3://${BUCKET_NAME} --cloudonly --force --yes
     # kops rolling-update cluster --name ${CLUSTER_NAME} --state s3://${BUCKET_NAME} --force --yes
     # kops rolling-update cluster --name ${CLUSTER_NAME} --state s3://${BUCKET_NAME} --yes
-}
 
-function get_cluster_info_json {
-
-    cd ${SOURCE_PATH}/cluster
-    terraform init >/dev/null
-    CLUSTER_INFO=$(terraform output -json)
+    export_kubeconfig
 }
 
 function wait_for_cluster_health {
 
-    kops validate cluster --wait 10m --name ${CLUSTER_NAME} --state s3://${BUCKET_NAME}
-    # kops validate cluster --name ${CLUSTER_NAME} --state s3://${BUCKET_NAME}
+    echo "Waiting for cluster health..."
+    kops validate cluster --name ${CLUSTER_NAME} --state s3://${BUCKET_NAME} --wait 10m
 }
 
-function setup_k8s_scaffolding {
+function setup_nginx_ingress_plugin {
+
+    echo "Setting up nginx ingress plugin..."
+
+    # apply template
+    cat ${ROOT_PATH}/kubernetes/templates/specs/nginx-ingress-load-balancer.yaml \
+      | sed -e  "s@SSL_CERT_ARN@${SSL_CERT_ARN}@g" \
+      > ${SOURCE_PATH}/specs/nginx-ingress-load-balancer.yaml
 
     # create Nginx Ingress controller:
     kubectl apply -f ${ROOT_PATH}/kubernetes/specs/nginx-ingress-controller.yaml
 
-    mkdir -p ${SOURCE_PATH}/cluster/specs
-
     # create nginx (region-specific) load-balancer
-    cat ${ROOT_PATH}/kubernetes/templates/specs/nginx-ingress-load-balancer.yaml \
-      | sed -e  "s@SSL_CERT_ARN@${SSL_CERT_ARN}@g" \
-      > ${SOURCE_PATH}/specs/nginx-ingress-load-balancer.yaml
     kubectl apply -f ${SOURCE_PATH}/specs/nginx-ingress-load-balancer.yaml
-
-    # create external-dns stuff:
-    cat ${ROOT_PATH}/kubernetes/templates/specs/external-dns.yaml \
-      | sed -e  "s@DOMAIN_NAME@${DOMAIN_NAME}@g" \
-      > ${SOURCE_PATH}/specs/external-dns.yaml
-    kubectl apply -f ${SOURCE_PATH}/specs/external-dns.yaml
-
-    # # create cluster auto-scaler
-    # cat ${ROOT_PATH}/kubernetes/specs/cluster-autoscaler-autodiscover.yaml \
-    #   | sed -e  "s@CLUSTER_NAME@${CLUSTER_NAME}@g" \
-    #   | kubectl apply -f -
-
-    # # create kubernetes dashboard:
-    # # kubectl apply -f kubernetes/specs/kubernetes-dashboard.yaml
-    # kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.0.0/aio/deploy/recommended.yaml
 }
+
+function setup_external_dns_plugin {
+
+    echo "Setting up external-dns plugin..."
+
+    # apply template
+    cat ${ROOT_PATH}/kubernetes/templates/specs/external-dns.yaml \
+      | sed -e  "s@DOMAIN@${DOMAIN}@g" \
+      > ${SOURCE_PATH}/specs/external-dns.yaml
+
+    kubectl apply -f ${SOURCE_PATH}/specs/external-dns.yaml
+}
+
+# # function setup_autoscaler {
+
+#     # WIP:
+
+#     # create cluster auto-scaler
+#     cat ${ROOT_PATH}/kubernetes/specs/cluster-autoscaler-autodiscover.yaml \
+#       | sed -e  "s@CLUSTER_NAME@${CLUSTER_NAME}@g" \
+#       | kubectl apply -f -
+
+#     # create kubernetes dashboard:
+#     # kubectl apply -f kubernetes/specs/kubernetes-dashboard.yaml
+#     kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.0.0/aio/deploy/recommended.yaml
+# # }
 #####
 
 
 # setup
-echo "Running setup"
+echo "Running setup..."
 source ${ROOT_PATH}/bash-scripts/devops-functions.sh
 run_setup
 
-mkdir -p ${SOURCE_PATH}/cluster
-mkdir -p ${SOURCE_PATH}/remote-state
-
-if [ "$1" == "force" ]; then
-    echo "** Forcing cluster update **"
-    remove_cluster_updating_status
-fi
-
-echo "Updating cluster status"
+echo "Updating cluster status..."
 # avoid simultaneous cluster updates
 set_cluster_updating_status
 
-echo "Starting K8s-cluster deployment for SOURCE_PATH: ${SOURCE_PATH}"
+echo "Starting K8s-cluster deployment for SOURCE_PATH: ${SOURCE_PATH}..."
 
 # create remote state setup if needed
-run_remote_state_terraform
+# run_remote_state_terraform
 
 # pull kubecfg if it exists
 pull_kube_config
+
+# check for EC2 SSH key
+check_ssh_key
 
 # use kubcfg if found, otherwise create cluster
 if test -f "${KUBECONFIG}"; then
     echo "** Kube-config file ${KUBECONFIG} found. Updating..."
 else
     echo "** Kube-config file ${KUBECONFIG} not found! Creating cluster..."
-    create_cluster
+    create_kops_cluster
 fi
-update_cluster # this needs work
+
+update_cluster
+
 wait_for_cluster_health
 
-setup_k8s_scaffolding
-
-# push kubeconfig to private s3 bucket
-# aws s3 cp kubecfg.yaml s3://$BUCKET_NAME/kubecfg.yaml
+setup_nginx_ingress_plugin
+setup_external_dns_plugin
 
 remove_cluster_updating_status
+
+echo "K8s cluster deployment finished."

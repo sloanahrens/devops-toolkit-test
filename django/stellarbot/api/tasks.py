@@ -9,7 +9,8 @@ from api.models import Ledger
 def celery_worker_health_check(self, timestamp):
     try:
         Ledger.objects.all().count()
-    except ProgrammingError:
+    except ProgrammingError as e:
+        print(e)
         return None
     return timestamp
 

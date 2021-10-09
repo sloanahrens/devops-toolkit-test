@@ -6,7 +6,7 @@ services:
     image: ${ECR_ID}.dkr.ecr.${ECR_REGION}.amazonaws.com/stellarbot/api-gateway:${IMAGE_TAG}
     restart: unless-stopped
     tty: true
-    container_name: local_prod_api_gateway
+    container_name: tagged_prod_api_gateway
     ports:
       - "9999:9999"
 
@@ -24,7 +24,7 @@ services:
     tty: true
     container_name: tagged_prod_webapp
     env_file:
-     - ../container_environments/test-stack.yaml
+     - ../container_environments/test_stack.yaml
     ports:
       - "8000:8000"
     links:
@@ -39,7 +39,7 @@ services:
     tty: true
     container_name: tagged_prod_worker
     env_file:
-     - ../container_environments/test-stack.yaml
+     - ../container_environments/test_stack.yaml
     links:
       - database
       - queue
@@ -52,7 +52,7 @@ services:
     tty: true
     container_name: tagged_prod_beat
     env_file:
-     - ../container_environments/test-stack.yaml
+     - ../container_environments/test_stack.yaml
     links:
       - database
       - queue
@@ -61,15 +61,15 @@ services:
 
   queue:
     image: rabbitmq:alpine
-    container_name: tagged_dev_rabbitmq
+    container_name: tagged_prod_rabbitmq
     env_file:
-     - ../container_environments/test-stack.yaml
+     - ../container_environments/test_stack.yaml
 
   redis:
     image: redis:alpine
-    container_name: tagged_dev_redis
+    container_name: tagged_prod_redis
     env_file:
-     - ../container_environments/test-stack.yaml
+     - ../container_environments/test_stack.yaml
 
   database:
     image: postgres:alpine
@@ -77,7 +77,7 @@ services:
     tty: true
     container_name: tagged_prod_postgres
     env_file:
-     - ../container_environments/test-stack.yaml
+     - ../container_environments/test_stack.yaml
     # volumes:
     #   - postgres_data:/var/lib/postgresql/data
 

@@ -32,8 +32,7 @@
 
 <script>
 
-const axios = require('axios').default
-axios.defaults.headers.common['Content-Type'] = 'application/json'
+import { apiService } from '@/_services'
 
 export default {
   name: 'DataList',
@@ -61,7 +60,7 @@ export default {
       this.error = JSON.stringify(error.response.data)
     },
     loadData () {
-      axios({ method: 'GET', url: '/api/v0.1/ledgers' })
+      apiService.get('ledgers')
         .then(response => {
           this.ledger_object = response.data
           this.setLoadDataTimeout()

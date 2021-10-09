@@ -4,18 +4,14 @@ set -e
 set -x
 
 
-cd /src/legacy-aws/${REGION}/${DEPLOYMENT_TYPE}
+cd ${ROOT_PATH}/legacy-aws/${REGION}/${DEPLOYMENT_TYPE}
 
 
 terraform init
 terraform destroy --auto-approve
 
-
-SOURCE_PATH=/src/legacy-aws/${REGION}/${DEPLOYMENT_TYPE}
-
-
-rm -f /src/legacy-aws/${REGION}/${DEPLOYMENT_TYPE}/core.tf
-
-rm -f /src/legacy-aws/${REGION}/${DEPLOYMENT_TYPE}/vpc.tf
-rm -f /src/legacy-aws/${REGION}/${DEPLOYMENT_TYPE}/rds.tf
-rm -f /src/legacy-aws/${REGION}/${DEPLOYMENT_TYPE}/output.tf
+#####
+# comment out for faster deletes/re-builds
+source ${ROOT_PATH}/bash-scripts/legacy-aws/destroy-terraform-remote-state.sh
+rm -rf ${ROOT_PATH}/legacy-aws/${REGION}/${DEPLOYMENT_TYPE}
+#####
