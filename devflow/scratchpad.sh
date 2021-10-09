@@ -117,10 +117,12 @@ docker run --rm \
 # ----- test app stack
 sleep 120 && \
 docker run --rm \
-  --name stacktester \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v $PWD:/src \
+  -e DOMAIN \
+  -e STACK_NAME \
   -e TESTERUSER_PASSWORD \
-  -e SERVICE="https://${STACK_NAME}.sloanahrens.com/api/v0.1" \
-  stacktest ./integration-tests.sh
+  devops bash /src/bash-scripts/testing/test-kubernetes-stack.sh
 
 
 # ----- destroy app stack

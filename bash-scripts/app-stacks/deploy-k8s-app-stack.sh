@@ -8,24 +8,15 @@ WEBAPP_REPLICAS=${WEBAPP_REPLICAS-'1'}
 WORKER_REPLICAS=${WORKER_REPLICAS-'1'}
 API_GATEWAY_REPLICAS=${API_GATEWAY_REPLICAS-'1'}
 
-CONFIG_PATH="${ROOT_PATH}/kubernetes/stack-config/test"
-
 echo "Deploying k8s stack:"
 echo "SOURCE_PATH: ${SOURCE_PATH}"
 echo "STACK_NAME: ${STACK_NAME}"
 echo "IMAGE_TAG: ${IMAGE_TAG}"
-echo "CONFIG_PATH: ${CONFIG_PATH}"
 
 echo "UI_REPLICAS: ${UI_REPLICAS}"
 echo "WEBAPP_REPLICAS: ${WEBAPP_REPLICAS}"
 echo "WORKER_REPLICAS: ${WORKER_REPLICAS}"
 echo "API_GATEWAY_REPLICAS: ${API_GATEWAY_REPLICAS}"
-
-# validate CONFIG_PATH
-if [ ! -d "${CONFIG_PATH}" ]; then
-    echo "*** CONFIG_PATH: ${CONFIG_PATH} does not exist! Exiting."
-    exit_with_error
-fi
 
 # setup
 echo "Running a few config tests..."
@@ -66,10 +57,9 @@ cat ${SPEC_TEMPLATES_PATH}/namespace.yaml \
 
 
 # deploy stack-config
-cat ${CONFIG_PATH}/stack-config.yaml \
+cat ${SPEC_TEMPLATES_PATH}/app-stack-config.yaml \
   | sed -e  "s@STACKNAME@${STACK_NAME}@g" \
   | sed -e  "s@IMAGETAG@${IMAGE_TAG}@g" \
-  | sed -e  "s@CONFIGPATH@${CONFIG_PATH}@g" \
   | sed -e  "s@POSTGRESHOST@${POSTGRES_HOST}@g" \
   | sed -e  "s@POSTGRESPORT@'${POSTGRES_PORT}'@g" \
   | sed -e  "s@POSTGRESUSER@${POSTGRES_USER}@g" \
@@ -147,32 +137,6 @@ cat ${SPEC_TEMPLATES_PATH}/api-gateway.yaml \
   | sed -e  "s@IMAGE_TAG@${IMAGE_TAG}@g" \
   | sed -e  "s@API_GATEWAY_REPLICAS@${API_GATEWAY_REPLICAS}@g" \
   | kubectl -n ${STACK_NAME} apply -f -
-
-
-# # create Route53 record
-# EXISTS='no'
-# aws route53 list-resource-record-sets  --hosted-zone-id ${R53_HOSTED_ZONE} | jq -c '.ResourceRecordSets[]' |
-# while read -r resourcerecordset; do
-#   read -r name type <<<$(echo $(jq -r '.Name,.Type' <<<"$resourcerecordset"))
-#   if [[ $name = ${STACK_NAME}* ]]; then
-#     EXISTS='yes'
-#     break
-#   fi
-# done
-# if [[ $EXISTS = 'no' ]]; then
-#   echo "Creating Route53 records for STACK_NAME: ${STACK_NAME}"
-#   aws route53 change-resource-record-sets \
-#     --hosted-zone-id ${R53_HOSTED_ZONE} \
-#     --change-batch '{"Changes":[{"Action":"CREATE","ResourceRecordSet":
-#         {
-#             "Name": "a.example.com",
-#                 "Type": "A",
-#                  "TTL": 300,
-#               "ResourceRecords": [{"Value": "5.5.5.5"}]
-#         }
-#       }]}' \
-#     --output text --query 'ChangeInfo.Id'
-# fi
 
 
 echo "Deployed stack \"${STACK_NAME}\"."

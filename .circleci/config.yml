@@ -67,6 +67,25 @@ jobs:
             docker build -t stacktest -f docker/stacktest/Dockerfile .
             bash bash-scripts/testing/test-tagged-image-docker-compose-stack.sh
 
+  validate_k8s_cluster:
+    <<: *defaults
+    steps:
+      - checkout
+      - run:
+          name: Validate Kubernetes Cluster
+          command: |
+            set -x
+            export SOURCE_PATH="kubernetes/us-east-2/dev"
+            source ${SOURCE_PATH}/environment.sh
+            export ROOT_PATH=.
+            bash bash-scripts/k8s-clusters/pull-kube-config.sh
+            if [ -f "${SOURCE_PATH}/cluster/kubecfg.yaml" ]; then
+              bash bash-scripts/k8s-clusters/validate-cluster.sh
+            else
+              echo "-- Kubernetes cluster not found."
+              exit 1
+            fi
+
   k8s_stack_tests:
     <<: *defaults
     steps:
@@ -84,31 +103,24 @@ jobs:
             set -x
             export IMAGE_TAG=$(python3 -c "import re; print(re.sub('[^0-9a-zA-Z]+', '-', '${CIRCLE_BRANCH}').lower())")
             export SOURCE_PATH="kubernetes/us-east-2/dev"
-            export CONFIG_PATH='kubernetes/stack-config/test'
             export ROOT_PATH=.
             source ${SOURCE_PATH}/environment.sh
-            export STACK_NAME="ci-${TRAVIS_BUILD_NUMBER}-${IMAGE_TAG}"
+            export STACK_NAME="ci-${CIRCLE_BUILD_NUM}-${IMAGE_TAG}"
             echo "SOURCE_PATH: ${SOURCE_PATH}"
             echo "IMAGE_TAG: ${IMAGE_TAG}"
             echo "STACK_NAME: ${STACK_NAME}"
             echo "-- Attempting to pull kubeconfig..."
             bash bash-scripts/k8s-clusters/pull-kube-config.sh
-            if [ -f "${SOURCE_PATH}/cluster/kubecfg.yaml" ]; then
-              echo "-- Attempting to validate cluster..."
-              bash bash-scripts/k8s-clusters/validate-cluster.sh
-              echo "-- Deploying K8s app-stack to ${CLUSTER_REGION}..."
-              bash bash-scripts/app-stacks/deploy-k8s-app-stack.sh
-              # this is inelegant, but avoids DNS cacheing problems in test script
-              echo "-- Sleeping 120 seconds..."
-              sleep 120
-              echo "-- Running API integration-tests against K8s app-stack..."
-              bash bash-scripts/testing/test-kubernetes-stack.sh
-              echo "-- Destroying app-stack..."
-              bash bash-scripts/app-stacks/destroy-k8s-app-stack.sh
-              echo "-- Kubernetes-stack integration tests succeeded."
-            else
-              echo "-- Kubernetes cluster not found, so not running K8s tests."
-            fi
+            echo "-- Deploying K8s app-stack to ${CLUSTER_REGION}..."
+            bash bash-scripts/app-stacks/deploy-k8s-app-stack.sh
+            # this is inelegant, but avoids DNS cacheing problems in test script
+            echo "-- Sleeping 120 seconds..."
+            sleep 120
+            echo "-- Running API integration-tests against K8s app-stack..."
+            bash bash-scripts/testing/test-kubernetes-stack.sh
+            echo "-- Destroying app-stack..."
+            bash bash-scripts/app-stacks/destroy-k8s-app-stack.sh
+            echo "-- Kubernetes-stack integration tests succeeded."
 
   prod_k8s_stack_deployment:
     <<: *defaults
@@ -126,29 +138,22 @@ jobs:
           command: |
             set -x
             export IMAGE_TAG=master
+            export STACK_NAME=prod-us-east-2-dev
             export SOURCE_PATH="kubernetes/us-east-2/dev"
-            export CONFIG_PATH='kubernetes/stack-config/test'
             export ROOT_PATH=.
-            source ${SOURCE_PATH}/environment.sh
-            export STACK_NAME="ci-${TRAVIS_BUILD_NUMBER}-${IMAGE_TAG}"
             echo "SOURCE_PATH: ${SOURCE_PATH}"
             echo "IMAGE_TAG: ${IMAGE_TAG}"
             echo "STACK_NAME: ${STACK_NAME}"
             echo "-- Attempting to pull kubeconfig..."
+            source ${SOURCE_PATH}/environment.sh
             bash bash-scripts/k8s-clusters/pull-kube-config.sh
-            if [ -f "${SOURCE_PATH}/cluster/kubecfg.yaml" ]; then
-              echo "-- Attempting to validate cluster..."
-              bash bash-scripts/k8s-clusters/validate-cluster.sh
-              echo "-- Deploying K8s app-stack to ${CLUSTER_REGION}..."
-              bash bash-scripts/app-stacks/deploy-k8s-app-stack.sh
-              echo "-- Sleeping 120 seconds..."
-              sleep 120
-              echo "-- Running API integration-tests against '${IMAGE_TAG}' app-stack..."
-              bash bash-scripts/testing/test-kubernetes-stack.sh
-              echo "-- Kubernetes-stack integration tests succeeded."
-            else
-              echo "-- Kubernetes cluster not found, so not deploying k8s stack."
-            fi
+            echo "-- Deploying K8s app-stack to ${CLUSTER_REGION}..."
+            bash bash-scripts/app-stacks/deploy-k8s-app-stack.sh
+            echo "-- Sleeping 120 seconds..."
+            sleep 120
+            echo "-- Running API integration-tests against '${IMAGE_TAG}' app-stack..."
+            bash bash-scripts/testing/test-kubernetes-stack.sh
+            echo "-- Kubernetes-stack integration tests succeeded."
 
   # prod_stack_deployment:
   #   <<: *defaults
@@ -177,13 +182,12 @@ workflows:
     jobs:
       - python_linting
       - javascript_linting
-      - image_build_test_push:
-          requires:
-            - python_linting
-            - javascript_linting
+      - validate_k8s_cluster
+      - image_build_test_push
       - k8s_stack_tests:
           requires:
             - image_build_test_push
+            - validate_k8s_cluster
       - prod_k8s_stack_deployment:
           requires:
             - k8s_stack_tests

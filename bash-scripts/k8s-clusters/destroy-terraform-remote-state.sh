@@ -45,6 +45,6 @@ terraform init
 echo "Destroying remote state resources..."
 terraform destroy --auto-approve
 
-echo "Removing remote-state terraform files..."
-rm -rf ${SOURCE_PATH}/remote-state/.terraform*
-rm -rf ${SOURCE_PATH}/remote-state/terraform*
+# echo "Removing remote-state terraform files..."
+# rm -rf ${SOURCE_PATH}/remote-state/.terraform*
+# rm -rf ${SOURCE_PATH}/remote-state/terraform*
