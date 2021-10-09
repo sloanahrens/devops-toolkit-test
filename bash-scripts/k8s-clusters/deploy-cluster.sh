@@ -110,6 +110,7 @@ function export_kubeconfig {
     echo "Exporting Kube-config..."
 
     kops export kubecfg --name ${CLUSTER_NAME} --state s3://${BUCKET_NAME}
+    # kops export kubecfg --name ${CLUSTER_NAME} --state s3://${BUCKET_NAME} --admin
 
     # push kubeconfig to private s3 bucket
     aws s3 cp ${SOURCE_PATH}/cluster/kubecfg.yaml s3://${BUCKET_NAME}/kubecfg.yaml
