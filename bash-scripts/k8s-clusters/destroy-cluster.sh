@@ -26,7 +26,9 @@ delete_kube_config
 source ${ROOT_PATH}/bash-scripts/k8s-clusters/destroy-terraform-remote-state.sh
 
 echo "Removing cluster files..."
-rm -rf ${SOURCE_PATH}/*
+rm -rf ${SOURCE_PATH}/specs
+rm -rf ${SOURCE_PATH}/cluster
+rm -rf ${SOURCE_PATH}/remote-state
 
 
 remove_cluster_updating_status
