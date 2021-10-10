@@ -197,7 +197,7 @@ set_cluster_updating_status
 echo "Starting K8s-cluster deployment for SOURCE_PATH: ${SOURCE_PATH}..."
 
 # create remote state setup if needed
-# run_remote_state_terraform
+run_remote_state_terraform
 
 # pull kubecfg if it exists
 pull_kube_config

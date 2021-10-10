@@ -1,12 +1,12 @@
 #!/bin/bash
 
+set -e
+
 # setup
 source ${ROOT_PATH}/bash-scripts/devops-functions.sh
 run_setup
 
 BUCKET="stellarbot-${CLUSTER_TYPE}-terraform-state-storage-${REGION}"
-
-set -e
 
 echo "Removing all versions from ${BUCKET}..."
 
@@ -44,7 +44,3 @@ terraform init
 
 echo "Destroying remote state resources..."
 terraform destroy --auto-approve
-
-# echo "Removing remote-state terraform files..."
-# rm -rf ${SOURCE_PATH}/remote-state/.terraform*
-# rm -rf ${SOURCE_PATH}/remote-state/terraform*

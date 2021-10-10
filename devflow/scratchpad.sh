@@ -16,7 +16,6 @@ export AWS_ACCESS_KEY_ID=...
 export AWS_SECRET_ACCESS_KEY=...
 
 export SOURCE_PATH=/src/kubernetes/us-east-2/dev
-export CONFIG_PATH='/src/kubernetes/stack-config/test'
 
 export TESTERUSER_PASSWORD=...
 export SUPERUSER_PASSWORD=...
@@ -68,7 +67,6 @@ docker run --rm -it \
   -e AWS_ACCESS_KEY_ID \
   -e AWS_SECRET_ACCESS_KEY \
   -e SOURCE_PATH \
-  -e CONFIG_PATH \
   -e IMAGE_TAG \
   -e STACK_NAME \
   -e POSTGRES_PASSWORD \
@@ -104,7 +102,6 @@ docker run --rm \
   -e AWS_ACCESS_KEY_ID \
   -e AWS_SECRET_ACCESS_KEY \
   -e SOURCE_PATH \
-  -e CONFIG_PATH \
   -e IMAGE_TAG \
   -e STACK_NAME \
   -e POSTGRES_PASSWORD \

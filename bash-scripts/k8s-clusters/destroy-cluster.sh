@@ -21,10 +21,14 @@ kops delete cluster --name $CLUSTER_NAME --state s3://$BUCKET_NAME --yes
 
 delete_kube_config
 
-# echo "Removing cluster terraform files..."
-# rm -rf ${SOURCE_PATH}/cluster/.terraform*
 
 # destroy remote state resources
-# source ${ROOT_PATH}/bash-scripts/k8s-clusters/destroy-terraform-remote-state.sh
+source ${ROOT_PATH}/bash-scripts/k8s-clusters/destroy-terraform-remote-state.sh
+
+echo "Removing cluster files..."
+rm -rf ${SOURCE_PATH}/*
+
 
 remove_cluster_updating_status
+
+echo "Cluster destroyed at ${SOURCE_PATH}:${SOURCE_PATH}"

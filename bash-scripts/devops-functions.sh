@@ -7,8 +7,9 @@ function exit_with_error {
 }
 
 function run_setup {
-    source_cluster_env
+    echo "ROOT_PATH: ${ROOT_PATH}"
     validate_source_paths
+    source_cluster_env
     validate_cluster_bucket
     validate_aws_config
 }
