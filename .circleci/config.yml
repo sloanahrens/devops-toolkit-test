@@ -138,7 +138,7 @@ jobs:
           command: |
             set -x
             export IMAGE_TAG=master
-            export STACK_NAME=prod-us-east-2-dev
+            export STACK_NAME=stellarbot
             export SOURCE_PATH="kubernetes/us-east-2/dev"
             export ROOT_PATH=.
             echo "SOURCE_PATH: ${SOURCE_PATH}"
