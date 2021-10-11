@@ -190,10 +190,6 @@ echo "Running setup..."
 source ${ROOT_PATH}/bash-scripts/devops-functions.sh
 run_setup
 
-echo "Updating cluster status..."
-# avoid simultaneous cluster updates
-set_cluster_updating_status
-
 echo "Starting K8s-cluster deployment for SOURCE_PATH: ${SOURCE_PATH}..."
 
 # create remote state setup if needed
@@ -219,7 +215,5 @@ wait_for_cluster_health
 
 setup_nginx_ingress_plugin
 setup_external_dns_plugin
-
-remove_cluster_updating_status
 
 echo "K8s cluster deployment finished."

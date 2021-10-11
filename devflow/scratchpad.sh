@@ -83,7 +83,7 @@ docker run --rm \
   -e AWS_ACCESS_KEY_ID \
   -e AWS_SECRET_ACCESS_KEY \
   -e SOURCE_PATH \
-  devops bash bash-scripts/k8s-clusters/deploy-cluster-force.sh
+  devops bash bash-scripts/k8s-clusters/deploy-cluster.sh
 
 
 # ----- destroy cluster (takes awhile)
@@ -92,7 +92,7 @@ docker run --rm \
   -e AWS_ACCESS_KEY_ID \
   -e AWS_SECRET_ACCESS_KEY \
   -e SOURCE_PATH \
-  devops bash /src/bash-scripts/k8s-clusters/destroy-cluster-force.sh
+  devops bash /src/bash-scripts/k8s-clusters/destroy-cluster.sh
 
 #####
 

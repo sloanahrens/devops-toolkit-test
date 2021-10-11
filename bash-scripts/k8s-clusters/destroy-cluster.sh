@@ -4,8 +4,6 @@
 source ${ROOT_PATH}/bash-scripts/devops-functions.sh
 run_setup
 
-set_cluster_updating_status
-
 pull_kube_config
 
 if [ -f "${KUBECONFIG}" ]; then
@@ -30,7 +28,5 @@ rm -rf ${SOURCE_PATH}/specs
 rm -rf ${SOURCE_PATH}/cluster
 rm -rf ${SOURCE_PATH}/remote-state
 
-
-remove_cluster_updating_status
 
 echo "Cluster destroyed at ${SOURCE_PATH}:${SOURCE_PATH}"
