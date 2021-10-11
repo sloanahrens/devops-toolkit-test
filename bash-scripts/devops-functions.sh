@@ -2,7 +2,7 @@
 
 function exit_with_error {
     echo 'Deployment failed!'
-    remove_cluster_updating_status
+    # remove_cluster_updating_status
     exit 1
 }
 
@@ -44,10 +44,10 @@ function source_cluster_env {
 }
 
 function validate_cluster_bucket {
-    if aws s3api head-bucket --bucket "${BUCKET_NAME}" 2>/dev/null; then
-        echo "** Bucket ${BUCKET_NAME} found."
+    if aws s3api head-bucket --bucket "${KOPS_BUCKET_NAME}" 2>/dev/null; then
+        echo "** Bucket ${KOPS_BUCKET_NAME} found."
     else
-        echo "*** Bucket ${BUCKET_NAME} does not exist! Exiting."
+        echo "*** Bucket ${KOPS_BUCKET_NAME} does not exist! Exiting."
         exit_with_error
     fi
 }
@@ -86,23 +86,23 @@ function test_for_kube_config {
 }
 
 function pull_kube_config {
-    totalFoundObjects=$(aws s3 ls s3://${BUCKET_NAME}/kubecfg.yaml --summarize | grep "Total Objects: " | sed 's/[^0-9]*//g')
+    totalFoundObjects=$(aws s3 ls s3://${KOPS_BUCKET_NAME}/kubecfg.yaml --summarize | grep "Total Objects: " | sed 's/[^0-9]*//g')
     if [ "$totalFoundObjects" -eq "0" ]; then
-        echo "** kubecfg.yaml not found in ${BUCKET_NAME}."
+        echo "** kubecfg.yaml not found in ${KOPS_BUCKET_NAME}."
         if [ -f "${KUBECONFIG}" ]; then
             rm ${KUBECONFIG}
         fi
     else
-        aws s3 cp s3://${BUCKET_NAME}/kubecfg.yaml ${KUBECONFIG} >/dev/null
+        aws s3 cp s3://${KOPS_BUCKET_NAME}/kubecfg.yaml ${KUBECONFIG} >/dev/null
     fi
 }
 
 function delete_kube_config {
-    totalFoundObjects=$(aws s3 ls s3://${BUCKET_NAME}/kubecfg.yaml --summarize | grep "Total Objects: " | sed 's/[^0-9]*//g')
+    totalFoundObjects=$(aws s3 ls s3://${KOPS_BUCKET_NAME}/kubecfg.yaml --summarize | grep "Total Objects: " | sed 's/[^0-9]*//g')
     if [ "$totalFoundObjects" -eq "0" ]; then
-        echo "** kubecfg.yaml not found in ${BUCKET_NAME}."
+        echo "** kubecfg.yaml not found in ${KOPS_BUCKET_NAME}."
     else
-        aws s3 rm s3://${BUCKET_NAME}/kubecfg.yaml
+        aws s3 rm s3://${KOPS_BUCKET_NAME}/kubecfg.yaml
     fi
     if [ -f "${KUBECONFIG}" ]; then
         rm ${KUBECONFIG}
@@ -111,7 +111,7 @@ function delete_kube_config {
 
 function test_cluster_updating_status_file_exists {
     # hack I found on SO for checking if a file exists in S3; returns file count
-    aws s3 ls s3://${BUCKET_NAME}/cluster_updating_status.txt --summarize | grep "Total Objects: " | sed 's/[^0-9]*//g'
+    aws s3 ls s3://${KOPS_BUCKET_NAME}/cluster_updating_status.txt --summarize | grep "Total Objects: " | sed 's/[^0-9]*//g'
 }
 
 function wait_for_external_update {
@@ -124,7 +124,7 @@ function wait_for_external_update {
             exit_with_error
         fi
         looper=$(($looper-1))
-        aws s3 cp s3://${BUCKET_NAME}/cluster_updating_status.txt ${SOURCE_PATH}/cluster_updating_status.txt >/dev/null
+        aws s3 cp s3://${KOPS_BUCKET_NAME}/cluster_updating_status.txt ${SOURCE_PATH}/cluster_updating_status.txt >/dev/null
         echo "** Cluster ${CLUSTER_NAME} is currently updating, as of: $(cat ${SOURCE_PATH}/cluster_updating_status.txt). Current time: `date`. Sleeping 1 minute ($(($limit-$looper))/$limit)..."
         sleep 60
         fileCount=$(test_cluster_updating_status_file_exists)
@@ -144,14 +144,14 @@ function set_cluster_updating_status {
         exit 0
     else
         echo `date` > ${SOURCE_PATH}/cluster_updating_status.txt
-        aws s3 cp ${SOURCE_PATH}/cluster_updating_status.txt s3://${BUCKET_NAME}/cluster_updating_status.txt >/dev/null
+        aws s3 cp ${SOURCE_PATH}/cluster_updating_status.txt s3://${KOPS_BUCKET_NAME}/cluster_updating_status.txt >/dev/null
     fi
 }
 
 function remove_cluster_updating_status {
     fileCount=$(test_cluster_updating_status_file_exists)
     if [ "$fileCount" != "0" ]; then
-        aws s3 rm s3://${BUCKET_NAME}/cluster_updating_status.txt
+        aws s3 rm s3://${KOPS_BUCKET_NAME}/cluster_updating_status.txt
     fi
     if [ -f "${SOURCE_PATH}/cluster_updating_status.txt" ]; then
         rm ${SOURCE_PATH}/cluster_updating_status.txt
@@ -164,7 +164,7 @@ function show_cluster_env {
     echo "REGION: ${REGION}"
     echo "CLUSTER_TYPE: ${CLUSTER_TYPE}"
     echo "CLUSTER_NAME: ${CLUSTER_NAME}"
-    echo "BUCKET_NAME: ${BUCKET_NAME}"
+    echo "KOPS_BUCKET_NAME: ${KOPS_BUCKET_NAME}"
     echo "MASTER_ZONES: ${MASTER_ZONES}"
     echo "NODE_ZONES: ${NODE_ZONES}"
     echo "MASTER_SIZE: ${MASTER_SIZE}"
@@ -177,7 +177,7 @@ function show_cluster_env {
 
 function test_tests_running_status_file_exists {
     # hack I found on SO for checking if a file exists in S3; returns file count
-    aws s3 ls s3://${BUCKET_NAME}/tests_running_status.txt --summarize | grep "Total Objects: " | sed 's/[^0-9]*//g'
+    aws s3 ls s3://${KOPS_BUCKET_NAME}/tests_running_status.txt --summarize | grep "Total Objects: " | sed 's/[^0-9]*//g'
 }
 
 function wait_for_external_tests_to_complete {
@@ -190,7 +190,7 @@ function wait_for_external_tests_to_complete {
             exit_with_error
         fi
         looper=$(($looper-1))
-        aws s3 cp s3://${BUCKET_NAME}/tests_running_status.txt ${SOURCE_PATH}/tests_running_status.txt >/dev/null
+        aws s3 cp s3://${KOPS_BUCKET_NAME}/tests_running_status.txt ${SOURCE_PATH}/tests_running_status.txt >/dev/null
         echo "** Another test-run is currently underway, as of: $(cat ${SOURCE_PATH}/tests_running_status.txt). Current time: `date`. Sleeping 1 minute ($(($limit-$looper))/$limit)..."
         sleep 60
         fileCount=$(test_tests_running_status_file_exists)
@@ -209,14 +209,14 @@ function set_tests_running_status {
         echo "** External test-run complete. Continuing."
     else
         echo `date` > ${SOURCE_PATH}/tests_running_status.txt
-        aws s3 cp ${SOURCE_PATH}/tests_running_status.txt s3://${BUCKET_NAME}/tests_running_status.txt >/dev/null
+        aws s3 cp ${SOURCE_PATH}/tests_running_status.txt s3://${KOPS_BUCKET_NAME}/tests_running_status.txt >/dev/null
     fi
 }
 
 function remove_tests_running_status {
     fileCount=$(test_tests_running_status_file_exists)
     if [ "$fileCount" != "0" ]; then
-        aws s3 rm s3://${BUCKET_NAME}/tests_running_status.txt
+        aws s3 rm s3://${KOPS_BUCKET_NAME}/tests_running_status.txt
     fi
     if [ -f "${SOURCE_PATH}/tests_running_status.txt" ]; then
         rm ${SOURCE_PATH}/tests_running_status.txt
