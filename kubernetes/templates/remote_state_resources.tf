@@ -2,21 +2,9 @@ provider "aws" {
   region = "REGION"
 }
 
-resource "aws_s3_bucket" "stellarbot-CLUSTER_TYPE-terraform-state-storage-REGION" {
-    bucket = "stellarbot-CLUSTER_TYPE-terraform-state-storage-REGION"
-
-    versioning {
-      enabled = true
-    }
-
-    tags = {
-      Name = "S3 Remote Terraform State Store for stellarbot-CLUSTER_TYPE REGION"
-    }
-}
-
 # create a dynamodb table for locking the state file
-resource "aws_dynamodb_table" "stellarbot-CLUSTER_TYPE-dynamodb-terraform-state-lock-REGION" {
-  name = "stellarbot-CLUSTER_TYPE-dynamodb-terraform-state-lock-REGION"
+resource "aws_dynamodb_table" "stellarbot-dynamodb-terraform-state-lock-REGION-CLUSTER_TYPE" {
+  name = "stellarbot-dynamodb-terraform-state-lock-REGION-CLUSTER_TYPE"
   hash_key = "LockID"
   read_capacity = 20
   write_capacity = 20
@@ -27,6 +15,32 @@ resource "aws_dynamodb_table" "stellarbot-CLUSTER_TYPE-dynamodb-terraform-state-
   }
 
   tags = {
-    Name = "DynamoDB Terraform State Lock Table for stellarbot-CLUSTER_TYPE REGION"
+    Name = "DynamoDB Terraform State Lock Table for stellarbot-REGION-CLUSTER_TYPE.k8s.local"
   }
+}
+
+# bucket for terraform remote stae
+resource "aws_s3_bucket" "stellarbot-terraform-state-REGION-CLUSTER_TYPE" {
+    bucket = "stellarbot-terraform-state-REGION-CLUSTER_TYPE"
+
+    versioning {
+      enabled = true
+    }
+
+    tags = {
+      Name = "S3 Remote Terraform State Store for stellarbot-REGION-CLUSTER_TYPE.k8s.local"
+    }
+}
+
+# bucket for kops remote state
+resource "aws_s3_bucket" "stellarbot-kops-state-REGION-CLUSTER_TYPE" {
+    bucket = "stellarbot-kops-state-REGION-CLUSTER_TYPE"
+
+    versioning {
+      enabled = true
+    }
+
+    tags = {
+      Name = "S3 Remote KOPS State Store for stellarbot-REGION-CLUSTER_TYPE.k8s.local"
+    }
 }

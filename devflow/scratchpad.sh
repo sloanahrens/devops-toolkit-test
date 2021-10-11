@@ -220,6 +220,7 @@ npm run serve
 
 npm install axios
 npm install ?bootstrap-vue
+npm install vuelidate
 
 
 

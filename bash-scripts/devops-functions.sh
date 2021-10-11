@@ -8,10 +8,10 @@ function exit_with_error {
 
 function run_setup {
     echo "ROOT_PATH: ${ROOT_PATH}"
+    validate_aws_config
     validate_source_paths
     source_cluster_env
     validate_cluster_bucket
-    validate_aws_config
 }
 
 function validate_source_paths {
@@ -21,15 +21,15 @@ function validate_source_paths {
         exit_with_error
     fi
     if [ ! -d "${SOURCE_PATH}/cluster" ]; then
-        echo "*** Cluster-path ${SOURCE_PATH}/cluster does not exist! Creating."
+        echo "*** Cluster-path ${SOURCE_PATH}/cluster does not exist! Creating..."
         mkdir -p ${SOURCE_PATH}/cluster
     fi
     if [ ! -d "${SOURCE_PATH}/specs" ]; then
-        echo "*** Specs-path ${SOURCE_PATH}/specs does not exist! Creating."
+        echo "*** Specs-path ${SOURCE_PATH}/specs does not exist! Creating..."
         mkdir -p ${SOURCE_PATH}/specs
     fi
     if [ ! -d "${SOURCE_PATH}/remote-state" ]; then
-        echo "*** Remote-state-path ${SOURCE_PATH}/remote-state does not exist! Creating."
+        echo "*** Remote-state-path ${SOURCE_PATH}/remote-state does not exist! Creating..."
         mkdir -p ${SOURCE_PATH}/remote-state
     fi
 }
@@ -44,7 +44,7 @@ function source_cluster_env {
 }
 
 function validate_cluster_bucket {
-    if aws s3api head-bucket --bucket "$BUCKET_NAME" 2>/dev/null; then
+    if aws s3api head-bucket --bucket "${BUCKET_NAME}" 2>/dev/null; then
         echo "** Bucket ${BUCKET_NAME} found."
     else
         echo "*** Bucket ${BUCKET_NAME} does not exist! Exiting."

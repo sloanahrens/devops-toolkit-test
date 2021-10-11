@@ -12,17 +12,6 @@ function get_cluster_info_json {
     CLUSTER_INFO=$(terraform output -json)
 }
 
-function check_ssh_key {
-
-    if test -f "${SOURCE_PATH}/${AWS_KEY_NAME}.pem"; then
-        echo "** Key file ${SOURCE_PATH}/${AWS_KEY_NAME}.pem found."
-        ssh-keygen -y -f ${SOURCE_PATH}/${AWS_KEY_NAME}.pem > ${SOURCE_PATH}/cluster/${AWS_KEY_NAME}.pub
-    else
-        echo "*** Key file ${SOURCE_PATH}/${AWS_KEY_NAME}.pem does not exist! Exiting."
-        exit_with_error
-    fi
-}
-
 function apply_remote_state_resources_template {
 
     cat ${ROOT_PATH}/kubernetes/templates/remote_state_resources.tf \
@@ -186,20 +175,42 @@ function setup_external_dns_plugin {
 
 
 # setup
-echo "Running setup..."
+echo "ROOT_PATH: ${ROOT_PATH}"
 source ${ROOT_PATH}/bash-scripts/devops-functions.sh
-run_setup
 
-echo "Starting K8s-cluster deployment for SOURCE_PATH: ${SOURCE_PATH}..."
+echo "Running setup..."
+validate_aws_config
+validate_source_paths
+source_cluster_env
 
-# create remote state setup if needed
-run_remote_state_terraform
+export AWS_DEFAULT_REGION=${REGION}
+
+# check for EC2 SSH key
+KEY_PATH=${SOURCE_PATH}/${AWS_KEY_NAME}.pem
+if test -f ${KEY_PATH}; then
+    echo "** Key file ${KEY_PATH} found."
+else
+    echo "*** Key file ${KEY_PATH} does not exist! Creating..."
+    aws ec2 create-key-pair --key-name ${AWS_KEY_NAME} | jq -r '.KeyMaterial' >${KEY_PATH}
+    chmod 400 ${KEY_PATH}
+    ssh-keygen -y -f ${KEY_PATH} > ${SOURCE_PATH}/cluster/${AWS_KEY_NAME}.pub
+fi
+
+# # create remote state setup if needed
+# run_remote_state_terraform
+
+# check for kops-state S3 bucket
+if aws s3api head-bucket --bucket "${BUCKET_NAME}" 2>/dev/null; then
+    echo "** Bucket ${BUCKET_NAME} found in ${REGION}."
+else
+    echo "*** Bucket ${BUCKET_NAME} does not exist! Exiting..."
+    exit_with_error
+fi
+
+echo "Starting K8s-cluster deployment/update for SOURCE_PATH: ${SOURCE_PATH}..."
 
 # pull kubecfg if it exists
 pull_kube_config
-
-# check for EC2 SSH key
-check_ssh_key
 
 # use kubcfg if found, otherwise create cluster
 if test -f "${KUBECONFIG}"; then
