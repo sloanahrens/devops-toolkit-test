@@ -44,7 +44,7 @@ const router = new VueRouter({
 // const SESSION_REFRESH_PERIOD_SECONDS = 300
 
 router.beforeEach((to, from, next) => {
-  document.title = `${process.env.VUE_APP_TITLE + ' | ' + to.name || ''}`
+  // document.title = `${process.env.VUE_APP_TITLE + ' | ' + to.name || ''}`
 
   // redirect to login page if not logged in and trying to access a restricted page
   const { authorize } = to.meta

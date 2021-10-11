@@ -20,7 +20,7 @@
         "s3:ListBucketVersions"
       ],
       "Resource": [
-        "arn:aws:s3:::BUCKET_NAME"
+        "arn:aws:s3:::KOPS_BUCKET_NAME"
       ]
     },
     {
@@ -29,15 +29,15 @@
         "s3:Get*"
       ],
       "Resource": [
-        "arn:aws:s3:::BUCKET_NAME/CLUSTER_NAME/addons/*",
-        "arn:aws:s3:::BUCKET_NAME/CLUSTER_NAME/cluster.spec",
-        "arn:aws:s3:::BUCKET_NAME/CLUSTER_NAME/config",
-        "arn:aws:s3:::BUCKET_NAME/CLUSTER_NAME/instancegroup/*",
-        "arn:aws:s3:::BUCKET_NAME/CLUSTER_NAME/pki/issued/*",
-        "arn:aws:s3:::BUCKET_NAME/CLUSTER_NAME/pki/private/kube-proxy/*",
-        "arn:aws:s3:::BUCKET_NAME/CLUSTER_NAME/pki/private/kubelet/*",
-        "arn:aws:s3:::BUCKET_NAME/CLUSTER_NAME/pki/ssh/*",
-        "arn:aws:s3:::BUCKET_NAME/CLUSTER_NAME/secrets/dockerconfig"
+        "arn:aws:s3:::KOPS_BUCKET_NAME/CLUSTER_NAME/addons/*",
+        "arn:aws:s3:::KOPS_BUCKET_NAME/CLUSTER_NAME/cluster.spec",
+        "arn:aws:s3:::KOPS_BUCKET_NAME/CLUSTER_NAME/config",
+        "arn:aws:s3:::KOPS_BUCKET_NAME/CLUSTER_NAME/instancegroup/*",
+        "arn:aws:s3:::KOPS_BUCKET_NAME/CLUSTER_NAME/pki/issued/*",
+        "arn:aws:s3:::KOPS_BUCKET_NAME/CLUSTER_NAME/pki/private/kube-proxy/*",
+        "arn:aws:s3:::KOPS_BUCKET_NAME/CLUSTER_NAME/pki/private/kubelet/*",
+        "arn:aws:s3:::KOPS_BUCKET_NAME/CLUSTER_NAME/pki/ssh/*",
+        "arn:aws:s3:::KOPS_BUCKET_NAME/CLUSTER_NAME/secrets/dockerconfig"
       ]
     },
     {
@@ -45,7 +45,7 @@
       "Action": [
         "s3:Get*"
       ],
-      "Resource": "arn:aws:s3:::BUCKET_NAME/CLUSTER_NAME/pki/private/calico-client/*"
+      "Resource": "arn:aws:s3:::KOPS_BUCKET_NAME/CLUSTER_NAME/pki/private/calico-client/*"
     },
     {
       "Effect": "Allow",

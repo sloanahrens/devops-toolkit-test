@@ -10,7 +10,9 @@ export SSL_CERT_ARN="arn:aws:acm:us-east-2:421987441365:certificate/a49dc1cf-281
 export KUBECONFIG=${SOURCE_PATH}/cluster/kubecfg.yaml
 
 export CLUSTER_NAME=stellarbot-${REGION}-${CLUSTER_TYPE}.k8s.local
-export BUCKET_NAME=stellarbot-kops-state-${REGION}-${CLUSTER_TYPE}
+export KOPS_BUCKET_NAME=stellarbot-kops-state-${REGION}-${CLUSTER_TYPE}
+export TERRAFORM_BUCKET_NAME=stellarbot-terraform-state-${REGION}-${CLUSTER_TYPE}
+export TERRAFORM_DYNAMODB_TABLE_NAME=stellarbot-terraform-state-${REGION}-${CLUSTER_TYPE}
 export AWS_KEY_NAME=stellarbot-devops-${REGION}-${CLUSTER_TYPE}
 
 export MASTER_ZONES=us-east-2a

@@ -1,8 +1,8 @@
 terraform {
   backend "s3" {
     encrypt = true
-    bucket = "stellarbot-terraform-state-REGION-CLUSTER_TYPE"
-    dynamodb_table = "stellarbot-dynamodb-terraform-state-lock-REGION-CLUSTER_TYPE"
+    bucket = "TERRAFORM_BUCKET_NAME"
+    dynamodb_table = "TERRAFORM_DYNAMODB_TABLE_NAME"
     region = "REGION"
     key = "terraform.tfstate"
   }

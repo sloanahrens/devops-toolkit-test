@@ -12,11 +12,28 @@ function get_cluster_info_json {
     CLUSTER_INFO=$(terraform output -json)
 }
 
+function setup_ec2_ssh_keys {
+    PUBLIC_KEY_PATH=${SOURCE_PATH}/cluster/${AWS_KEY_NAME}.pub
+    if test -f ${PUBLIC_KEY_PATH}; then
+        echo "Key file ${PUBLIC_KEY_PATH} found."
+    else
+        echo "Key file ${PUBLIC_KEY_PATH} does not exist! Creating..."
+        export AWS_DEFAULT_REGION=${REGION}
+        PRIVATE_KEY_PATH=${SOURCE_PATH}/cluster/${AWS_KEY_NAME}.pem
+        aws ec2 create-key-pair --key-name ${PRIVATE_KEY_PATH} | jq -r '.KeyMaterial' >${PRIVATE_KEY_PATH}
+        chmod 400 ${PRIVATE_KEY_PATH}
+        ssh-keygen -y -f ${PRIVATE_KEY_PATH} > ${PUBLIC_KEY_PATH}
+    fi
+}
+
 function apply_remote_state_resources_template {
 
     cat ${ROOT_PATH}/kubernetes/templates/remote_state_resources.tf \
+      | sed -e "s@TERRAFORM_DYNAMODB_TABLE_NAME@${TERRAFORM_DYNAMODB_TABLE_NAME}@g" \
+      | sed -e "s@TERRAFORM_BUCKET_NAME@${TERRAFORM_BUCKET_NAME}@g" \
+      | sed -e "s@KOPS_BUCKET_NAME@${KOPS_BUCKET_NAME}@g" \
+      | sed -e "s@CLUSTER_NAME@${CLUSTER_NAME}@g" \
       | sed -e "s@REGION@${REGION}@g" \
-      | sed -e "s@CLUSTER_TYPE@${CLUSTER_TYPE}@g" \
       > ${SOURCE_PATH}/remote-state/remote_state_resources.tf
 }
 
@@ -38,14 +55,15 @@ function apply_cluster_infrastructure_templates {
 
     # reference to terraform remote state:
     cat ${ROOT_PATH}/kubernetes/templates/remote_state.tf \
+      | sed -e "s@TERRAFORM_DYNAMODB_TABLE_NAME@${TERRAFORM_DYNAMODB_TABLE_NAME}@g" \
+      | sed -e "s@TERRAFORM_BUCKET_NAME@${TERRAFORM_BUCKET_NAME}@g" \
       | sed -e "s@REGION@${REGION}@g" \
-      | sed -e "s@CLUSTER_TYPE@${CLUSTER_TYPE}@g" \
       > ${SOURCE_PATH}/cluster/remote_state.tf
 
     # need to add some things to k8s node IAM policy:
     cat ${ROOT_PATH}/kubernetes/templates/node_iam_policy.txt \
       | sed -e "s@R53_HOSTED_ZONE@${R53_HOSTED_ZONE}@g" \
-      | sed -e "s@BUCKET_NAME@${BUCKET_NAME}@g" \
+      | sed -e "s@KOPS_BUCKET_NAME@${KOPS_BUCKET_NAME}@g" \
       | sed -e "s@CLUSTER_NAME@${CLUSTER_NAME}@g" \
       > ${SOURCE_PATH}/cluster/data/aws_iam_role_policy_nodes.${CLUSTER_NAME}_policy
 
@@ -72,12 +90,12 @@ function create_kops_cluster {
 
     cd ${SOURCE_PATH}/cluster
 
-    echo "** Creating ${CLUSTER_NAME} in ${REGION} with kops..."
+    echo "Creating ${CLUSTER_NAME} in ${REGION} with kops..."
 
     kops create cluster \
         --cloud=aws \
         --name ${CLUSTER_NAME} \
-        --state s3://${BUCKET_NAME} \
+        --state s3://${KOPS_BUCKET_NAME} \
         --master-count ${MASTER_COUNT} \
         --node-count ${NODE_COUNT} \
         --node-size ${NODE_SIZE} \
@@ -100,11 +118,11 @@ function export_kubeconfig {
 
     echo "Exporting Kube-config..."
 
-    kops export kubecfg --name ${CLUSTER_NAME} --state s3://${BUCKET_NAME}
-    # kops export kubecfg --name ${CLUSTER_NAME} --state s3://${BUCKET_NAME} --admin
+    kops export kubecfg --name ${CLUSTER_NAME} --state s3://${KOPS_BUCKET_NAME}
+    # kops export kubecfg --name ${CLUSTER_NAME} --state s3://${KOPS_BUCKET_NAME} --admin
 
     # push kubeconfig to private s3 bucket
-    aws s3 cp ${SOURCE_PATH}/cluster/kubecfg.yaml s3://${BUCKET_NAME}/kubecfg.yaml
+    aws s3 cp ${SOURCE_PATH}/cluster/kubecfg.yaml s3://${KOPS_BUCKET_NAME}/kubecfg.yaml
 }
 
 function update_cluster {
@@ -113,15 +131,15 @@ function update_cluster {
 
     cd ${SOURCE_PATH}/cluster
 
-    kops update cluster ${CLUSTER_NAME} --state s3://${BUCKET_NAME} --target=terraform --out=.
+    kops update cluster ${CLUSTER_NAME} --state s3://${KOPS_BUCKET_NAME} --target=terraform --out=.
 
     sleep 2
 
     run_cluster_terraform
 
-    kops rolling-update cluster --name ${CLUSTER_NAME} --state s3://${BUCKET_NAME} --cloudonly --force --yes
-    # kops rolling-update cluster --name ${CLUSTER_NAME} --state s3://${BUCKET_NAME} --force --yes
-    # kops rolling-update cluster --name ${CLUSTER_NAME} --state s3://${BUCKET_NAME} --yes
+    kops rolling-update cluster --name ${CLUSTER_NAME} --state s3://${KOPS_BUCKET_NAME} --cloudonly --force --yes
+    # kops rolling-update cluster --name ${CLUSTER_NAME} --state s3://${KOPS_BUCKET_NAME} --force --yes
+    # kops rolling-update cluster --name ${CLUSTER_NAME} --state s3://${KOPS_BUCKET_NAME} --yes
 
     export_kubeconfig
 }
@@ -129,7 +147,7 @@ function update_cluster {
 function wait_for_cluster_health {
 
     echo "Waiting for cluster health..."
-    kops validate cluster --name ${CLUSTER_NAME} --state s3://${BUCKET_NAME} --wait 10m
+    kops validate cluster --name ${CLUSTER_NAME} --state s3://${KOPS_BUCKET_NAME} --wait 10m
 }
 
 function setup_nginx_ingress_plugin {
@@ -177,6 +195,8 @@ function setup_external_dns_plugin {
 
 
 # setup
+echo "Starting K8s-cluster deployment/update for SOURCE_PATH: ${SOURCE_PATH}..."
+
 echo "ROOT_PATH: ${ROOT_PATH}"
 source ${ROOT_PATH}/bash-scripts/devops-functions.sh
 
@@ -185,40 +205,23 @@ validate_aws_config
 validate_source_paths
 source_cluster_env
 
-export AWS_DEFAULT_REGION=${REGION}
-
 # check for EC2 SSH key
-KEY_PATH=${SOURCE_PATH}/${AWS_KEY_NAME}.pem
-if test -f ${KEY_PATH}; then
-    echo "** Key file ${KEY_PATH} found."
-else
-    echo "*** Key file ${KEY_PATH} does not exist! Creating..."
-    aws ec2 create-key-pair --key-name ${AWS_KEY_NAME} | jq -r '.KeyMaterial' >${KEY_PATH}
-    chmod 400 ${KEY_PATH}
-    ssh-keygen -y -f ${KEY_PATH} > ${SOURCE_PATH}/cluster/${AWS_KEY_NAME}.pub
-fi
+setup_ec2_ssh_keys
 
 # create remote state setup if needed
 run_remote_state_terraform
 
 # check for kops-state S3 bucket
-if aws s3api head-bucket --bucket "${BUCKET_NAME}" 2>/dev/null; then
-    echo "** Bucket ${BUCKET_NAME} found in ${REGION}."
-else
-    echo "*** Bucket ${BUCKET_NAME} does not exist! Exiting..."
-    exit_with_error
-fi
-
-echo "Starting K8s-cluster deployment/update for SOURCE_PATH: ${SOURCE_PATH}..."
+validate_cluster_bucket
 
 # pull kubecfg if it exists
 pull_kube_config
 
 # use kubcfg if found, otherwise create cluster
 if test -f "${KUBECONFIG}"; then
-    echo "** Kube-config file ${KUBECONFIG} found. Updating..."
+    echo "Kube-config file ${KUBECONFIG} found. Updating..."
 else
-    echo "** Kube-config file ${KUBECONFIG} not found! Creating cluster..."
+    echo "Kube-config file ${KUBECONFIG} not found! Creating cluster..."
     create_kops_cluster
 fi
 
