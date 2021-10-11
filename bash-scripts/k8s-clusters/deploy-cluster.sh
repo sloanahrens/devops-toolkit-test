@@ -30,6 +30,8 @@ function run_remote_state_terraform {
     
     terraform init
     terraform apply --auto-approve
+
+    sleep 2
 }
 
 function apply_cluster_infrastructure_templates {
@@ -63,7 +65,7 @@ function run_cluster_terraform {
     terraform plan
     terraform apply --auto-approve
 
-    sleep 1
+    sleep 2
 }
 
 function create_kops_cluster {
@@ -113,7 +115,7 @@ function update_cluster {
 
     kops update cluster ${CLUSTER_NAME} --state s3://${BUCKET_NAME} --target=terraform --out=.
 
-    sleep 1
+    sleep 2
 
     run_cluster_terraform
 
@@ -196,8 +198,8 @@ else
     ssh-keygen -y -f ${KEY_PATH} > ${SOURCE_PATH}/cluster/${AWS_KEY_NAME}.pub
 fi
 
-# # create remote state setup if needed
-# run_remote_state_terraform
+# create remote state setup if needed
+run_remote_state_terraform
 
 # check for kops-state S3 bucket
 if aws s3api head-bucket --bucket "${BUCKET_NAME}" 2>/dev/null; then
