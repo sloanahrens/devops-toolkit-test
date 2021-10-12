@@ -35,7 +35,7 @@ spec:
       terminationGracePeriodSeconds: 10
       containers:
       - name: api-gateway
-        image: ECR_ID.dkr.ecr.ECR_REGION.amazonaws.com/stellarbot/api-gateway:IMAGE_TAG
+        image: ECR_ID.dkr.ecr.ECR_REGION.amazonaws.com/PROJECT_NAME/api-gateway:IMAGE_TAG
         imagePullPolicy: Always
         envFrom:
         - configMapRef:

@@ -81,8 +81,8 @@ cat ${ROOT_PATH}/legacy-aws/templates/remote_state.tf \
   > ${SOURCE_PATH}/remote_state.tf
 
 # push the two files needed to run the docker images, which are pulled from the ec2-instance via instance user_data script
-aws s3 cp ${ROOT_PATH}/docker/docker-compose-prod-stack-master.yaml s3://stellarbot-legacy-${DEPLOYMENT_TYPE}-terraform-state-storage-${REGION}/docker-compose.yaml
-aws s3 cp ${ROOT_PATH}/container_environments/legacy-prod.yaml s3://stellarbot-legacy-${DEPLOYMENT_TYPE}-terraform-state-storage-${REGION}/stack-config.yaml
+aws s3 cp ${ROOT_PATH}/docker/docker-compose-prod-stack-master.yaml s3://${PROJECT_NAME}-legacy-${DEPLOYMENT_TYPE}-terraform-state-storage-${REGION}/docker-compose.yaml
+aws s3 cp ${ROOT_PATH}/container_environments/legacy-prod.yaml s3://${PROJECT_NAME}-legacy-${DEPLOYMENT_TYPE}-terraform-state-storage-${REGION}/stack-config.yaml
 
 sleep 10
 

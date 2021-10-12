@@ -7,11 +7,11 @@ set -e
 source ${ROOT_PATH}/bash-scripts/devops-functions.sh
 run_setup
 
-BUCKET=${TERRAFORM_BUCKET_NAME}
+BUCKET=${KOPS_BUCKET_NAME}
 delete_versioned_bucket_contents
 
-cd ${SOURCE_PATH}/remote-state
+cd ${SOURCE_PATH}/kops-bucket
 terraform init
 
-echo "Destroying remote state resources..."
+echo "Destroying kops state bucket..."
 terraform destroy --auto-approve

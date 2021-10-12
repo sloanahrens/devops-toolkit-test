@@ -3,7 +3,7 @@ version: '3.4'
 services:
 
   api-gateway:
-    image: ${ECR_ID}.dkr.ecr.${ECR_REGION}.amazonaws.com/stellarbot/api-gateway:${IMAGE_TAG}
+    image: ${ECR_ID}.dkr.ecr.${ECR_REGION}.amazonaws.com/${PROJECT_NAME}/api-gateway:${IMAGE_TAG}
     restart: unless-stopped
     tty: true
     container_name: tagged_prod_api_gateway
@@ -11,7 +11,7 @@ services:
       - "9999:9999"
 
   ui:
-    image: ${ECR_ID}.dkr.ecr.${ECR_REGION}.amazonaws.com/stellarbot/ui:${IMAGE_TAG}
+    image: ${ECR_ID}.dkr.ecr.${ECR_REGION}.amazonaws.com/${PROJECT_NAME}/ui:${IMAGE_TAG}
     restart: unless-stopped
     tty: true
     container_name: tagged_prod_ui
@@ -19,7 +19,7 @@ services:
       - "80:80"
 
   webapp:
-    image: ${ECR_ID}.dkr.ecr.${ECR_REGION}.amazonaws.com/stellarbot/django:${IMAGE_TAG}
+    image: ${ECR_ID}.dkr.ecr.${ECR_REGION}.amazonaws.com/${PROJECT_NAME}/django:${IMAGE_TAG}
     restart: unless-stopped
     tty: true
     container_name: tagged_prod_webapp
@@ -34,7 +34,7 @@ services:
     command: /src/initialize-webapp.sh
 
   worker:
-    image: ${ECR_ID}.dkr.ecr.${ECR_REGION}.amazonaws.com/stellarbot/django:${IMAGE_TAG}
+    image: ${ECR_ID}.dkr.ecr.${ECR_REGION}.amazonaws.com/${PROJECT_NAME}/django:${IMAGE_TAG}
     restart: unless-stopped
     tty: true
     container_name: tagged_prod_worker
@@ -44,10 +44,10 @@ services:
       - database
       - queue
       - redis
-    command: bash -c "export C_FORCE_ROOT=true && celery --app=stellarbot.celery worker -O fair -c 1 --loglevel=info"
+    command: bash -c "export C_FORCE_ROOT=true && celery --app=${PROJECT_NAME}.celery worker -O fair -c 1 --loglevel=info"
 
   beat:
-    image: ${ECR_ID}.dkr.ecr.${ECR_REGION}.amazonaws.com/stellarbot/django:${IMAGE_TAG}
+    image: ${ECR_ID}.dkr.ecr.${ECR_REGION}.amazonaws.com/${PROJECT_NAME}/django:${IMAGE_TAG}
     restart: unless-stopped
     tty: true
     container_name: tagged_prod_beat
@@ -57,7 +57,7 @@ services:
       - database
       - queue
       - redis
-    command: bash -c "export C_FORCE_ROOT=true && sleep 20 && celery --app=stellarbot.celery beat --loglevel=info"
+    command: bash -c "export C_FORCE_ROOT=true && sleep 20 && celery --app=${PROJECT_NAME}.celery beat --loglevel=info"
 
   queue:
     image: rabbitmq:alpine

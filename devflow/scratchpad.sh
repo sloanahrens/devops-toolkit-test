@@ -112,7 +112,7 @@ docker run --rm \
 
 
 # ----- test app stack
-sleep 120 && \
+sleep 180 && \
 docker run --rm \
   -v /var/run/docker.sock:/var/run/docker.sock \
   -v $PWD:/src \

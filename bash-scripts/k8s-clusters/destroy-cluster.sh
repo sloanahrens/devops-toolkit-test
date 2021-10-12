@@ -23,10 +23,15 @@ delete_kube_config
 # destroy remote state resources
 source ${ROOT_PATH}/bash-scripts/k8s-clusters/destroy-remote-state-resources.sh
 
+# # destroy kops state bucket
+# source ${ROOT_PATH}/bash-scripts/k8s-clusters/destroy-kops-bucket.sh
+
+
 echo "Removing cluster files..."
 rm -rf ${SOURCE_PATH}/specs
 rm -rf ${SOURCE_PATH}/cluster
 rm -rf ${SOURCE_PATH}/remote-state
+rm -rf ${SOURCE_PATH}/kops-bucket
 
 
 echo "Cluster destroyed at ${SOURCE_PATH}:${SOURCE_PATH}"

@@ -97,6 +97,7 @@ cat ${SPEC_TEMPLATES_PATH}/redis.yaml \
 cat ${SPEC_TEMPLATES_PATH}/ui.yaml \
   | sed -e  "s@ECR_ID@${ECR_ID}@g" \
   | sed -e  "s@ECR_REGION@${ECR_REGION}@g" \
+  | sed -e  "s@PROJECT_NAME@${PROJECT_NAME}@g" \
   | sed -e  "s@STACK_NAME@${STACK_NAME}@g" \
   | sed -e  "s@IMAGE_TAG@${IMAGE_TAG}@g" \
   | sed -e  "s@UI_REPLICAS@${UI_REPLICAS}@g" \
@@ -106,6 +107,7 @@ cat ${SPEC_TEMPLATES_PATH}/ui.yaml \
 cat ${SPEC_TEMPLATES_PATH}/webapp.yaml \
   | sed -e  "s@ECR_ID@${ECR_ID}@g" \
   | sed -e  "s@ECR_REGION@${ECR_REGION}@g" \
+  | sed -e  "s@PROJECT_NAME@${PROJECT_NAME}@g" \
   | sed -e  "s@STACK_NAME@${STACK_NAME}@g" \
   | sed -e  "s@IMAGE_TAG@${IMAGE_TAG}@g" \
   | sed -e  "s@WEBAPP_REPLICAS@${WEBAPP_REPLICAS}@g" \
@@ -115,6 +117,7 @@ cat ${SPEC_TEMPLATES_PATH}/webapp.yaml \
 cat ${SPEC_TEMPLATES_PATH}/worker.yaml \
   | sed -e  "s@ECR_ID@${ECR_ID}@g" \
   | sed -e  "s@ECR_REGION@${ECR_REGION}@g" \
+  | sed -e  "s@PROJECT_NAME@${PROJECT_NAME}@g" \
   | sed -e  "s@STACK_NAME@${STACK_NAME}@g" \
   | sed -e  "s@IMAGE_TAG@${IMAGE_TAG}@g" \
   | sed -e  "s@WORKER_REPLICAS@${WORKER_REPLICAS}@g" \
@@ -124,6 +127,7 @@ cat ${SPEC_TEMPLATES_PATH}/worker.yaml \
 cat ${SPEC_TEMPLATES_PATH}/beat.yaml \
   | sed -e  "s@ECR_ID@${ECR_ID}@g" \
   | sed -e  "s@ECR_REGION@${ECR_REGION}@g" \
+  | sed -e  "s@PROJECT_NAME@${PROJECT_NAME}@g" \
   | sed -e  "s@STACK_NAME@${STACK_NAME}@g" \
   | sed -e  "s@IMAGE_TAG@${IMAGE_TAG}@g" \
   | kubectl -n ${STACK_NAME} apply -f -
@@ -132,6 +136,7 @@ cat ${SPEC_TEMPLATES_PATH}/beat.yaml \
 cat ${SPEC_TEMPLATES_PATH}/api-gateway.yaml \
   | sed -e  "s@ECR_ID@${ECR_ID}@g" \
   | sed -e  "s@ECR_REGION@${ECR_REGION}@g" \
+  | sed -e  "s@PROJECT_NAME@${PROJECT_NAME}@g" \
   | sed -e  "s@DOMAIN_NAME@${DOMAIN_NAME}@g" \
   | sed -e  "s@STACK_NAME@${STACK_NAME}@g" \
   | sed -e  "s@IMAGE_TAG@${IMAGE_TAG}@g" \

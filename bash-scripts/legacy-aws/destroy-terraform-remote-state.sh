@@ -6,7 +6,7 @@ set -e
 source ${ROOT_PATH}/bash-scripts/devops-functions.sh
 validate_aws_config
 
-bucket="stellarbot-legacy-${DEPLOYMENT_TYPE}-terraform-state-storage-${REGION}"
+bucket="${PROJECT_NAME}-legacy-${DEPLOYMENT_TYPE}-terraform-state-storage-${REGION}"
 
 echo "Removing all versions from $bucket..."
 

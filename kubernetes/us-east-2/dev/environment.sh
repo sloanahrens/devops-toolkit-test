@@ -3,17 +3,22 @@
 export REGION=us-east-2
 export CLUSTER_TYPE=dev
 
+export PROJECT_NAME=stellarbot
+
 export DOMAIN=sloanahrens.com
 export R53_HOSTED_ZONE=Z1CDZE44WDSMXZ
 export SSL_CERT_ARN="arn:aws:acm:us-east-2:421987441365:certificate/a49dc1cf-281f-4abf-a2ca-d79379e2f41b"
 
 export KUBECONFIG=${SOURCE_PATH}/cluster/kubecfg.yaml
 
-export CLUSTER_NAME=stellarbot-${REGION}-${CLUSTER_TYPE}.k8s.local
-export KOPS_BUCKET_NAME=stellarbot-kops-state-${REGION}-${CLUSTER_TYPE}
-export TERRAFORM_BUCKET_NAME=stellarbot-terraform-state-${REGION}-${CLUSTER_TYPE}
-export TERRAFORM_DYNAMODB_TABLE_NAME=stellarbot-terraform-state-${REGION}-${CLUSTER_TYPE}
-export AWS_KEY_NAME=stellarbot-devops-${REGION}-${CLUSTER_TYPE}
+export CLUSTER_NAME=${PROJECT_NAME}-${REGION}-${CLUSTER_TYPE}.k8s.local
+export KOPS_BUCKET_NAME=${PROJECT_NAME}-kops-state-${REGION}-${CLUSTER_TYPE}
+
+export TERRAFORM_BUCKET_NAME=${PROJECT_NAME}-terraform-state-${REGION}-${CLUSTER_TYPE}
+export TERRAFORM_DYNAMODB_TABLE_NAME=${PROJECT_NAME}-terraform-state-${REGION}-${CLUSTER_TYPE}
+
+export AWS_KEY_NAME=${PROJECT_NAME}-devops-${REGION}-${CLUSTER_TYPE}
+export PRIVATE_KEY_PATH=${ROOT_PATH}/kubernetes/keys/${AWS_KEY_NAME}.pem
 
 export MASTER_ZONES=us-east-2a
 export NODE_ZONES=${MASTER_ZONES}

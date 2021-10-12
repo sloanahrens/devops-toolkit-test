@@ -80,7 +80,7 @@ echo "-----"
 # test API token with stacktester user
 PASSWORD=${TESTERUSER_PASSWORD-'boatymcboatface'}
 USERNAME=stacktester
-echo "${USERNAME}:${PASSWORD}"
+# echo "${USERNAME}:${PASSWORD}"
 
 res=$(curl -X POST -s ${SERVICE}/api/token -d "{\"username\": \"${USERNAME}\", \"password\": \"${PASSWORD}\"}" -H 'Content-Type: application/json' -H 'Accept: application/json' -H 'Cache-Control: no-cache')
 echo "$res"
