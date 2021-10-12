@@ -23,24 +23,11 @@ resource "aws_dynamodb_table" "TERRAFORM_DYNAMODB_TABLE_NAME" {
 resource "aws_s3_bucket" "TERRAFORM_BUCKET_NAME" {
     bucket = "TERRAFORM_BUCKET_NAME"
 
-    # versioning {
-    #   enabled = true
-    # }
+    versioning {
+      enabled = true
+    }
 
     tags = {
       Name = "S3 Remote Terraform State Store for CLUSTER_NAME"
-    }
-}
-
-# bucket for kops remote state
-resource "aws_s3_bucket" "KOPS_BUCKET_NAME" {
-    bucket = "KOPS_BUCKET_NAME"
-
-    # versioning {
-    #   enabled = true
-    # }
-
-    tags = {
-      Name = "S3 Remote KOPS State Store for CLUSTER_NAME"
     }
 }

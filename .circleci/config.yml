@@ -49,12 +49,12 @@ jobs:
             echo "IMAGE_TAG: ${IMAGE_TAG}"
             source docker/repo.sh
             $(aws ecr get-login --no-include-email --region ${ECR_REGION})
-            docker tag ui ${ECR_ID}.dkr.ecr.${ECR_REGION}.amazonaws.com/stellarbot/ui:${IMAGE_TAG}
-            docker tag django ${ECR_ID}.dkr.ecr.${ECR_REGION}.amazonaws.com/stellarbot/django:${IMAGE_TAG}
-            docker tag api-gateway ${ECR_ID}.dkr.ecr.${ECR_REGION}.amazonaws.com/stellarbot/api-gateway:${IMAGE_TAG}
-            docker push ${ECR_ID}.dkr.ecr.${ECR_REGION}.amazonaws.com/stellarbot/ui:${IMAGE_TAG}
-            docker push ${ECR_ID}.dkr.ecr.${ECR_REGION}.amazonaws.com/stellarbot/django:${IMAGE_TAG}
-            docker push ${ECR_ID}.dkr.ecr.${ECR_REGION}.amazonaws.com/stellarbot/api-gateway:${IMAGE_TAG}
+            docker tag ui ${ECR_ID}.dkr.ecr.${ECR_REGION}.amazonaws.com/${PROJECT_NAME}/ui:${IMAGE_TAG}
+            docker tag django ${ECR_ID}.dkr.ecr.${ECR_REGION}.amazonaws.com/${PROJECT_NAME}/django:${IMAGE_TAG}
+            docker tag api-gateway ${ECR_ID}.dkr.ecr.${ECR_REGION}.amazonaws.com/${PROJECT_NAME}/api-gateway:${IMAGE_TAG}
+            docker push ${ECR_ID}.dkr.ecr.${ECR_REGION}.amazonaws.com/${PROJECT_NAME}/ui:${IMAGE_TAG}
+            docker push ${ECR_ID}.dkr.ecr.${ECR_REGION}.amazonaws.com/${PROJECT_NAME}/django:${IMAGE_TAG}
+            docker push ${ECR_ID}.dkr.ecr.${ECR_REGION}.amazonaws.com/${PROJECT_NAME}/api-gateway:${IMAGE_TAG}
       - run:
           name: Docker-Compose Tests Tagged
           command: |
@@ -155,7 +155,7 @@ jobs:
             bash bash-scripts/testing/test-kubernetes-stack.sh
             echo "-- Kubernetes-stack integration tests succeeded."
 
-  # prod_stack_deployment:
+  # legacy_stack_deployment:
   #   <<: *defaults
   #   steps:
   #     - checkout

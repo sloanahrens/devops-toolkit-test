@@ -39,7 +39,7 @@ spec:
       terminationGracePeriodSeconds: 10
       containers:
       - name: webapp
-        image: ECR_ID.dkr.ecr.ECR_REGION.amazonaws.com/stellarbot/django:IMAGE_TAG
+        image: ECR_ID.dkr.ecr.ECR_REGION.amazonaws.com/PROJECT_NAME/django:IMAGE_TAG
         imagePullPolicy: Always
         envFrom:
         - configMapRef:

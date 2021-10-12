@@ -320,9 +320,9 @@ resource "aws_internet_gateway" "stellarbot-us-east-2-dev-k8s-local" {
   vpc_id = aws_vpc.stellarbot-us-east-2-dev-k8s-local.id
 }
 
-resource "aws_key_pair" "kubernetes-stellarbot-us-east-2-dev-k8s-local-7d1d2a6ffd7e218449b35e57d78c4e6b" {
-  key_name   = "kubernetes.stellarbot-us-east-2-dev.k8s.local-7d:1d:2a:6f:fd:7e:21:84:49:b3:5e:57:d7:8c:4e:6b"
-  public_key = file("${path.module}/data/aws_key_pair_kubernetes.stellarbot-us-east-2-dev.k8s.local-7d1d2a6ffd7e218449b35e57d78c4e6b_public_key")
+resource "aws_key_pair" "kubernetes-stellarbot-us-east-2-dev-k8s-local-57274c232b8c480cd7d57dd09eddc850" {
+  key_name   = "kubernetes.stellarbot-us-east-2-dev.k8s.local-57:27:4c:23:2b:8c:48:0c:d7:d5:7d:d0:9e:dd:c8:50"
+  public_key = file("${path.module}/data/aws_key_pair_kubernetes.stellarbot-us-east-2-dev.k8s.local-57274c232b8c480cd7d57dd09eddc850_public_key")
   tags = {
     "KubernetesCluster"                                        = "stellarbot-us-east-2-dev.k8s.local"
     "Name"                                                     = "stellarbot-us-east-2-dev.k8s.local"
@@ -347,7 +347,7 @@ resource "aws_launch_template" "master-us-east-2a-masters-stellarbot-us-east-2-d
   }
   image_id      = "ami-044696ab785e77725"
   instance_type = "r5.xlarge"
-  key_name      = aws_key_pair.kubernetes-stellarbot-us-east-2-dev-k8s-local-7d1d2a6ffd7e218449b35e57d78c4e6b.id
+  key_name      = aws_key_pair.kubernetes-stellarbot-us-east-2-dev-k8s-local-57274c232b8c480cd7d57dd09eddc850.id
   lifecycle {
     create_before_destroy = true
   }
@@ -421,7 +421,7 @@ resource "aws_launch_template" "nodes-us-east-2a-stellarbot-us-east-2-dev-k8s-lo
   }
   image_id      = "ami-044696ab785e77725"
   instance_type = "r5.large"
-  key_name      = aws_key_pair.kubernetes-stellarbot-us-east-2-dev-k8s-local-7d1d2a6ffd7e218449b35e57d78c4e6b.id
+  key_name      = aws_key_pair.kubernetes-stellarbot-us-east-2-dev-k8s-local-57274c232b8c480cd7d57dd09eddc850.id
   lifecycle {
     create_before_destroy = true
   }

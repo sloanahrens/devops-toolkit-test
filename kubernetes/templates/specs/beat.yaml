@@ -21,10 +21,10 @@ spec:
       terminationGracePeriodSeconds: 10
       containers:
       - name: beat
-        image: ECR_ID.dkr.ecr.ECR_REGION.amazonaws.com/stellarbot/django:IMAGE_TAG
+        image: ECR_ID.dkr.ecr.ECR_REGION.amazonaws.com/PROJECT_NAME/django:IMAGE_TAG
         imagePullPolicy: Always
         envFrom:
         - configMapRef:
             name: stack-config
         command: ["/bin/bash"]
-        args: ["-c", "export C_FORCE_ROOT=true && sleep 20 && celery --app=stellarbot.celery beat --loglevel=info"]
+        args: ["-c", "export C_FORCE_ROOT=true && sleep 20 && celery --app=PROJECT_NAME.celery beat --loglevel=info"]

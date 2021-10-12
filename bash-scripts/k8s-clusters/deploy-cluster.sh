@@ -15,13 +15,17 @@ function get_cluster_info_json {
 function setup_ec2_ssh_keys {
     PUBLIC_KEY_PATH=${SOURCE_PATH}/cluster/${AWS_KEY_NAME}.pub
     if test -f ${PUBLIC_KEY_PATH}; then
-        echo "Key file ${PUBLIC_KEY_PATH} found."
+        echo "Public Key file ${PUBLIC_KEY_PATH} found."
     else
-        echo "Key file ${PUBLIC_KEY_PATH} does not exist! Creating..."
-        export AWS_DEFAULT_REGION=${REGION}
-        PRIVATE_KEY_PATH=${SOURCE_PATH}/cluster/${AWS_KEY_NAME}.pem
-        aws ec2 create-key-pair --key-name ${PRIVATE_KEY_PATH} | jq -r '.KeyMaterial' >${PRIVATE_KEY_PATH}
-        chmod 400 ${PRIVATE_KEY_PATH}
+        echo "Public Key file ${PUBLIC_KEY_PATH} does not exist! Creating..."
+        if test -f ${PRIVATE_KEY_PATH}; then
+            echo "Private Key file ${PRIVATE_KEY_PATH} found."
+        else
+            echo "Private Key file ${PRIVATE_KEY_PATH} does not exist! Creating..."
+            export AWS_DEFAULT_REGION=${REGION}
+            aws ec2 create-key-pair --key-name ${AWS_KEY_NAME} | jq -r '.KeyMaterial' >${PRIVATE_KEY_PATH}
+            chmod 400 ${PRIVATE_KEY_PATH}
+        fi
         ssh-keygen -y -f ${PRIVATE_KEY_PATH} > ${PUBLIC_KEY_PATH}
     fi
 }
@@ -31,10 +35,18 @@ function apply_remote_state_resources_template {
     cat ${ROOT_PATH}/kubernetes/templates/remote_state_resources.tf \
       | sed -e "s@TERRAFORM_DYNAMODB_TABLE_NAME@${TERRAFORM_DYNAMODB_TABLE_NAME}@g" \
       | sed -e "s@TERRAFORM_BUCKET_NAME@${TERRAFORM_BUCKET_NAME}@g" \
-      | sed -e "s@KOPS_BUCKET_NAME@${KOPS_BUCKET_NAME}@g" \
       | sed -e "s@CLUSTER_NAME@${CLUSTER_NAME}@g" \
       | sed -e "s@REGION@${REGION}@g" \
       > ${SOURCE_PATH}/remote-state/remote_state_resources.tf
+}
+
+function apply_kops_state_bucket_template {
+
+    cat ${ROOT_PATH}/kubernetes/templates/kops_state_bucket.tf \
+      | sed -e "s@KOPS_BUCKET_NAME@${KOPS_BUCKET_NAME}@g" \
+      | sed -e "s@CLUSTER_NAME@${CLUSTER_NAME}@g" \
+      | sed -e "s@REGION@${REGION}@g" \
+      > ${SOURCE_PATH}/kops-bucket/kops_state_bucket.tf
 }
 
 function run_remote_state_terraform {
@@ -47,8 +59,18 @@ function run_remote_state_terraform {
     
     terraform init
     terraform apply --auto-approve
+}
 
-    sleep 2
+function run_kops_bucket_terraform {
+
+    echo "Running kops-state-bucket terraform code..."
+
+    apply_kops_state_bucket_template
+
+    cd ${SOURCE_PATH}/kops-bucket
+    
+    terraform init
+    terraform apply --auto-approve
 }
 
 function apply_cluster_infrastructure_templates {
@@ -172,6 +194,7 @@ function setup_external_dns_plugin {
 
     # apply template
     cat ${ROOT_PATH}/kubernetes/templates/specs/external-dns.yaml \
+      | sed -e  "s@PROJECT_NAME@${PROJECT_NAME}@g" \
       | sed -e  "s@DOMAIN@${DOMAIN}@g" \
       > ${SOURCE_PATH}/specs/external-dns.yaml
 
@@ -207,6 +230,9 @@ source_cluster_env
 
 # check for EC2 SSH key
 setup_ec2_ssh_keys
+
+# create kops state bucket if needed
+run_kops_bucket_terraform
 
 # create remote state setup if needed
 run_remote_state_terraform
