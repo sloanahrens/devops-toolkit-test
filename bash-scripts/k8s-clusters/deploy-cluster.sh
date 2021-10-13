@@ -13,7 +13,11 @@ function get_cluster_info_json {
 }
 
 function setup_ec2_ssh_keys {
+
+    check_cluster_path
+
     PUBLIC_KEY_PATH=${SOURCE_PATH}/cluster/${AWS_KEY_NAME}.pub
+
     if test -f ${PUBLIC_KEY_PATH}; then
         echo "Public Key file ${PUBLIC_KEY_PATH} found."
     else
@@ -32,6 +36,11 @@ function setup_ec2_ssh_keys {
 
 function apply_remote_state_resources_template {
 
+    if [ ! -d "${SOURCE_PATH}/remote-state" ]; then
+        echo "Creating ${SOURCE_PATH}/remote-state..."
+        mkdir -p ${SOURCE_PATH}/remote-state
+    fi
+
     cat ${ROOT_PATH}/kubernetes/templates/remote_state_resources.tf \
       | sed -e "s@TERRAFORM_DYNAMODB_TABLE_NAME@${TERRAFORM_DYNAMODB_TABLE_NAME}@g" \
       | sed -e "s@TERRAFORM_BUCKET_NAME@${TERRAFORM_BUCKET_NAME}@g" \
@@ -41,6 +50,11 @@ function apply_remote_state_resources_template {
 }
 
 function apply_kops_state_bucket_template {
+
+    if [ ! -d "${SOURCE_PATH}/kops-bucket" ]; then
+        echo "Creating ${SOURCE_PATH}/kops-bucket..."
+        mkdir -p ${SOURCE_PATH}/kops-bucket
+    fi
 
     cat ${ROOT_PATH}/kubernetes/templates/kops_state_bucket.tf \
       | sed -e "s@KOPS_BUCKET_NAME@${KOPS_BUCKET_NAME}@g" \
@@ -64,8 +78,6 @@ function run_remote_state_terraform {
 function run_kops_bucket_terraform {
 
     echo "Running kops-state-bucket terraform code..."
-
-    apply_kops_state_bucket_template
 
     cd ${SOURCE_PATH}/kops-bucket
     
@@ -108,7 +120,26 @@ function run_cluster_terraform {
     sleep 2
 }
 
+function check_cluster_path {
+
+    if [ ! -d "${SOURCE_PATH}/cluster" ]; then
+        echo "Creating ${SOURCE_PATH}/cluster..."
+        mkdir -p ${SOURCE_PATH}/cluster
+    fi
+}
+
+function check_specs_path {\
+
+    if [ ! -d "${SOURCE_PATH}/specs" ]; then
+        echo "Creating ${SOURCE_PATH}/specs..."
+        mkdir -p ${SOURCE_PATH}/specs
+    fi
+}
+
 function create_kops_cluster {
+
+    check_cluster_path
+    check_specs_path
 
     cd ${SOURCE_PATH}/cluster
 
@@ -220,19 +251,20 @@ function setup_external_dns_plugin {
 # setup
 echo "Starting K8s-cluster deployment/update for SOURCE_PATH: ${SOURCE_PATH}..."
 
-echo "ROOT_PATH: ${ROOT_PATH}"
 source ${ROOT_PATH}/bash-scripts/devops-functions.sh
 
-echo "Running setup..."
+echo "Running setup and tests..."
 validate_aws_config
-validate_source_paths
+validate_source_path
 source_cluster_env
+show_cluster_env
 
 # check for EC2 SSH key
 setup_ec2_ssh_keys
 
 # create kops state bucket if needed
-run_kops_bucket_terraform
+apply_kops_state_bucket_template
+# run_kops_bucket_terraform
 
 # create remote state setup if needed
 run_remote_state_terraform

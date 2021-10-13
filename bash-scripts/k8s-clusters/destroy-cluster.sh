@@ -11,27 +11,34 @@ if [ -f "${KUBECONFIG}" ]; then
     kubectl delete ns ingress-nginx --ignore-not-found=true
 fi
 
-cd ${SOURCE_PATH}/cluster
-terraform init
-terraform destroy --auto-approve
+if [ -d "${SOURCE_PATH}/cluster" ]; then
 
-kops delete cluster --name ${CLUSTER_NAME} --state s3://${KOPS_BUCKET_NAME} --yes
+    echo "${SOURCE_PATH}/cluster found. Deleting..."
 
-delete_kube_config
+    cd ${SOURCE_PATH}/cluster
+
+    terraform init
+    
+    echo "Destroying cluster resources..."
+    terraform destroy --auto-approve
+
+    kops delete cluster --name ${CLUSTER_NAME} --state s3://${KOPS_BUCKET_NAME} --yes
+
+    delete_kube_config
+
+    echo "Removing cluster files..."
+    rm -rf ${SOURCE_PATH}/specs
+    rm -rf ${SOURCE_PATH}/cluster
+else
+    echo "Cluster terraform path '${SOURCE_PATH}/cluster' does not exist. So let's not delete it. ;)"
+fi
 
 
 # destroy remote state resources
 source ${ROOT_PATH}/bash-scripts/k8s-clusters/destroy-remote-state-resources.sh
 
-# # destroy kops state bucket
+# destroy kops state bucket
 # source ${ROOT_PATH}/bash-scripts/k8s-clusters/destroy-kops-bucket.sh
 
 
-echo "Removing cluster files..."
-rm -rf ${SOURCE_PATH}/specs
-rm -rf ${SOURCE_PATH}/cluster
-rm -rf ${SOURCE_PATH}/remote-state
-rm -rf ${SOURCE_PATH}/kops-bucket
-
-
-echo "Cluster destroyed at ${SOURCE_PATH}:${SOURCE_PATH}"
+echo "Cluster destroyed at ${SOURCE_PATH}:${SOURCE_PATH}."

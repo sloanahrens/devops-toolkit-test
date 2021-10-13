@@ -21,7 +21,7 @@ echo "API_GATEWAY_REPLICAS: ${API_GATEWAY_REPLICAS}"
 # setup
 echo "Running a few config tests..."
 source "${ROOT_PATH}/bash-scripts/devops-functions.sh"
-validate_source_paths
+validate_source_path
 source_cluster_env
 validate_aws_config
 pull_kube_config

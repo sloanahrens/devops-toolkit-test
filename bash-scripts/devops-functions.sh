@@ -20,38 +20,22 @@ function show_cluster_env {
     echo "MASTER_COUNT: ${MASTER_COUNT}"
     echo "NODE_COUNT: ${NODE_COUNT}"
     echo "SOURCE_PATH: ${SOURCE_PATH}"
+    echo "ROOT_PATH: ${ROOT_PATH}"
+    echo "PROJECT_NAME: ${PROJECT_NAME}"
     echo "----------"
 }
 
 function run_setup {
-    echo "ROOT_PATH: ${ROOT_PATH}"
     validate_aws_config
-    validate_source_paths
+    validate_source_path
     source_cluster_env
     validate_cluster_bucket
 }
 
-function validate_source_paths {
-    echo "SOURCE_PATH: ${SOURCE_PATH}"
+function validate_source_path {
     if [ ! -d "${SOURCE_PATH}" ]; then
         echo "*** Source-path '${SOURCE_PATH}' does not exist! Exiting."
         exit_with_error
-    fi
-    if [ ! -d "${SOURCE_PATH}/cluster" ]; then
-        echo "Creating ${SOURCE_PATH}/cluster..."
-        mkdir -p ${SOURCE_PATH}/cluster
-    fi
-    if [ ! -d "${SOURCE_PATH}/specs" ]; then
-        echo "Creating ${SOURCE_PATH}/specs..."
-        mkdir -p ${SOURCE_PATH}/specs
-    fi
-    if [ ! -d "${SOURCE_PATH}/remote-state" ]; then
-        echo "Creating ${SOURCE_PATH}/remote-state..."
-        mkdir -p ${SOURCE_PATH}/remote-state
-    fi
-    if [ ! -d "${SOURCE_PATH}/kops-bucket" ]; then
-        echo "Creating ${SOURCE_PATH}/kops-bucket..."
-        mkdir -p ${SOURCE_PATH}/kops-bucket
     fi
 }
 
@@ -135,31 +119,29 @@ function delete_versioned_bucket_contents {
         echo "Removing all versions from ${BUCKET}..."
         versions=`aws s3api list-object-versions --bucket ${BUCKET} |jq '.Versions'`
         markers=`aws s3api list-object-versions --bucket ${BUCKET} |jq '.DeleteMarkers'`
-        let count=`echo $versions |jq 'length'`-1
 
+        let count=`echo $versions |jq 'length'`-1
         if [ $count -gt -1 ]; then
-                echo "removing files"
-                for i in $(seq 0 $count); do
-                        key=`echo $versions | jq .[$i].Key |sed -e 's/\"//g'`
-                        versionId=`echo $versions | jq .[$i].VersionId |sed -e 's/\"//g'`
-                        cmd="aws s3api delete-object --bucket ${BUCKET} --key $key --version-id $versionId"
-                        echo $cmd
-                        $cmd
-                done
+            echo "removing files"
+            for i in $(seq 0 $count); do
+                key=`echo $versions | jq .[$i].Key |sed -e 's/\"//g'`
+                versionId=`echo $versions | jq .[$i].VersionId |sed -e 's/\"//g'`
+                cmd="aws s3api delete-object --bucket ${BUCKET} --key $key --version-id $versionId"
+                echo $cmd
+                $cmd
+            done
         fi
 
         let count=`echo $markers |jq 'length'`-1
-
         if [ $count -gt -1 ]; then
-                echo "removing delete markers"
-
-                for i in $(seq 0 $count); do
-                        key=`echo $markers | jq .[$i].Key |sed -e 's/\"//g'`
-                        versionId=`echo $markers | jq .[$i].VersionId |sed -e 's/\"//g'`
-                        cmd="aws s3api delete-object --bucket ${BUCKET} --key $key --version-id $versionId"
-                        echo $cmd
-                        $cmd
-                done
+            echo "removing delete markers"
+            for i in $(seq 0 $count); do
+                key=`echo $markers | jq .[$i].Key |sed -e 's/\"//g'`
+                versionId=`echo $markers | jq .[$i].VersionId |sed -e 's/\"//g'`
+                cmd="aws s3api delete-object --bucket ${BUCKET} --key $key --version-id $versionId"
+                echo $cmd
+                $cmd
+            done
         fi
 }
 
