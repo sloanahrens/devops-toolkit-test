@@ -264,7 +264,7 @@ setup_ec2_ssh_keys
 
 # create kops state bucket if needed
 apply_kops_state_bucket_template
-# run_kops_bucket_terraform
+run_kops_bucket_terraform
 
 # create remote state setup if needed
 run_remote_state_terraform

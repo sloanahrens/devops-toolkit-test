@@ -38,7 +38,7 @@ fi
 source ${ROOT_PATH}/bash-scripts/k8s-clusters/destroy-remote-state-resources.sh
 
 # destroy kops state bucket
-# source ${ROOT_PATH}/bash-scripts/k8s-clusters/destroy-kops-bucket.sh
+source ${ROOT_PATH}/bash-scripts/k8s-clusters/destroy-kops-bucket.sh
 
 
 echo "Cluster destroyed at ${SOURCE_PATH}:${SOURCE_PATH}."
