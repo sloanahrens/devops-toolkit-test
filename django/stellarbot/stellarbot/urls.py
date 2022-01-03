@@ -15,17 +15,6 @@ from rest_framework_simplejwt.views import (
     TokenVerifyView,
 )
 
-# from api.models import Ledger
-# from api.serializers import LedgerSerializer
-
-
-# class LedgerViewSet(viewsets.ModelViewSet):
-#     queryset = Ledger.objects.all()
-#     serializer_class = LedgerSerializer
-
-
-# router = routers.DefaultRouter()
-# router.register(r'ledgers', LedgerViewSet)
 
 urlpatterns = [
     path('admin/', admin.site.urls),

@@ -127,13 +127,6 @@ def get_price_rel_error(a, b):
             }
         }
     }
-    # log_print('\n'.join([f"-----",
-    #                  f"arith: {report['price_errors']['arithmetic']}",
-    #                  f"geo: {report['price_errors']['geometric']}",
-    #                  f"geo-log-scaled: {report['price_errors']['geo_log']}",
-    #                  f"geo diff: {report['price_errors']['diffs']['geo_log']}",
-    #                  f"arith/log-geo diff: {report['price_errors']['diffs']['arith_geo_log']}",
-    #                  f"-----"]))
     return geo_log, report
 
 
@@ -205,19 +198,6 @@ def random_asset_pair_scan():
         asset_pair.direct_market_error = 1 - asset_pair.forward_close * asset_pair.backward_close
     else:
         asset_pair.recent_direct_market = False
-
-    # log_print(''.join(['---------------',
-    #                f'\n{asset_pair.base_asset.asset_code} -> {asset_pair.counter_asset.asset_code}: {asset_pair.forward_close}',
-    #                f'\n{asset_pair.counter_asset.asset_code} -> {asset_pair.base_asset.asset_code}: {asset_pair.backward_close}',
-    #                f'\nerror: {asset_pair.market_relative_error}',
-    #                '\n---------------']))
-
-    # if asset_pair.market_relative_error > settings.CONVERSION_RATE_ERROR_THRESHOLD:
-    #     opp = Opportunity(asset_pair=asset_pair, error_value=asset_pair.market_relative_error)
-    #     opp.save()
-    #     log_print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
-    #     # TODO: logic for local wallet=sync amounts in db
-    #     # TODO: make actual trades
 
 
     # PATHS
@@ -372,12 +352,3 @@ def start_data_sync():
     # give things time to spin up
     handle_asset_api_sync.apply_async(countdown=60)
     random_asset_pair_scan.apply_async(countdown=60)
-
-
-# # everything is in milliseconds
-# resolution = 60 * 1000
-# end_time = int(datetime.utcnow().timestamp()) * 1000
-# start_time = end_time - 24 * 3600 * 1000
-# log_print(f'https://horizon.stellar.org/trade_aggregations?base_asset_type=native&counter_asset_code=TeslaTech&counter_asset_issuer=GCXX55H6SKWCE72MCUSPNKCSMXSOSFIABBZXFZKWXQSAZ2ZUCKKUFPTZ&counter_asset_type=credit_alphanum4&resolution={resolution}&start_time={start_time}&end_time={end_time}&limit=1&order=desc')
-
-

@@ -38,7 +38,6 @@ class LedgersView(APIView):
         logs = list(
             WorkerLogLine.objects.all().order_by('-timestamp')[:settings.OBJECTS_RETURN_LIMIT])
 
-
         return Response({
 
             'positive_cycle_asset_pairs': [ap.pair_desc_list for ap in positive_cycle_asset_pairs],
