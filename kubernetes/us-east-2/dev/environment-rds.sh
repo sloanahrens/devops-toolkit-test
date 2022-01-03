@@ -22,11 +22,12 @@ export PRIVATE_KEY_PATH=${ROOT_PATH}/kubernetes/keys/${AWS_KEY_NAME}.pem
 
 export MASTER_ZONES=us-east-2a
 export NODE_ZONES=${MASTER_ZONES}
-export MASTER_SIZE=t3.large
-export NODE_SIZE=t3.large
+export MASTER_SIZE=r5.xlarge
+export NODE_SIZE=r5.large
 export MASTER_COUNT=1
 export NODE_COUNT=1
 
+# export WORKER_REPLICAS=3
 
 export POSTGRES_HOST=database
 export POSTGRES_PORT=5432
@@ -39,8 +40,8 @@ export RABBITMQ_DEFAULT_VHOST=k8s_vhost
 export REDIS_HOST=redis
 export REDIS_PORT=6379
 export REDIS_NAMESPACE=0
-
 export SUPERUSER_EMAIL='admin@nowhere.com'
+
 export SUPERUSER_PASSWORD=${SUPERUSER_PASSWORD-'wren-landmark-pup-eve'}
 export TESTERUSER_PASSWORD=${TESTERUSER_PASSWORD-'entendre-wist-surgeon'}
 export VIEWERUSER_PASSWORD=${VIEWERUSER_PASSWORD-'foot-bezoar-craving'}

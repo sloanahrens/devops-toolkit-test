@@ -48,6 +48,15 @@ function source_cluster_env {
     source ${SOURCE_PATH}/environment.sh
 }
 
+function source_cluster_env_rds {
+    if [ ! -f "${SOURCE_PATH}/environment-rds.sh" ]; then
+        echo "SOURCE_PATH: ${SOURCE_PATH}"
+        echo "*** Environment file ${SOURCE_PATH}/environment-rds.sh does not exist! Exiting."
+        exit_with_error
+    fi
+    source ${SOURCE_PATH}/environment-rds.sh
+}
+
 function validate_cluster_bucket {
     if aws s3api head-bucket --bucket "${KOPS_BUCKET_NAME}" 2>/dev/null; then
         echo "Bucket ${KOPS_BUCKET_NAME} found."

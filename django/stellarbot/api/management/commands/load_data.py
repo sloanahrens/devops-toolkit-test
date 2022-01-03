@@ -10,7 +10,8 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
 
-        server = Server(horizon_url="https://horizon-testnet.stellar.org")
+        server = Server(horizon_url="https://horizon.stellar.org")
+        # server = Server(horizon_url="https://horizon-testnet.stellar.org")
         ledgers = server.ledgers().order(desc=True).call()
 
         Ledger.objects.all().delete()

@@ -15,4 +15,10 @@ docker run --rm \
     -e TESTERUSER_PASSWORD \
     stacktest ./integration-tests.sh
 
+# docker run --rm \
+#     --name stacktester \
+#     -e SERVICE="https://${STACK_NAME}.${DOMAIN}" \
+#     -e TESTERUSER_PASSWORD \
+#     stacktest ./integration-tests.sh
+
 echo "Finished: `date`"

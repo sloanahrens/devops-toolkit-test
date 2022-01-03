@@ -78,9 +78,9 @@ services:
     container_name: local_prod_postgres
     env_file:
      - ../container_environments/test_stack.yaml
-    # volumes:
-    #   - postgres_data:/var/lib/postgresql/data
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
 
-# volumes:
-#   postgres_data:
-#     external: false
+volumes:
+  postgres_data:
+    external: false

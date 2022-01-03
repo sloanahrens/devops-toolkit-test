@@ -40,12 +40,38 @@ services:
       - "8000:8000"
     links:
       - database
-    command: bash -c "python manage.py migrate && python manage.py create_admin_user && python manage.py runserver 0.0.0.0:8000"
+    command: bash -c "python manage.py migrate && python manage.py create_admin_user && python manage.py shell -c 'from api.tasks import start_data_sync; start_data_sync.delay()' && python manage.py runserver 0.0.0.0:8000"
 
   # celery worker
-  worker:
+  worker1:
     image: baseimage
-    container_name: local_dev_celery_worker
+    container_name: local_dev_celery_worker1
+    env_file:
+     - ../container_environments/test_stack.yaml
+    environment:
+      C_FORCE_ROOT: "yes"
+    volumes:
+      - ../django/stellarbot:/src
+    links:
+      - database
+      - queue
+    command: bash -c "celery --app=stellarbot.celery worker -O fair -c 1 --loglevel=info"
+  worker2:
+    image: baseimage
+    container_name: local_dev_celery_worker2
+    env_file:
+     - ../container_environments/test_stack.yaml
+    environment:
+      C_FORCE_ROOT: "yes"
+    volumes:
+      - ../django/stellarbot:/src
+    links:
+      - database
+      - queue
+    command: bash -c "celery --app=stellarbot.celery worker -O fair -c 1 --loglevel=info"
+  worker3:
+    image: baseimage
+    container_name: local_dev_celery_worker3
     env_file:
      - ../container_environments/test_stack.yaml
     environment:
@@ -91,9 +117,9 @@ services:
     container_name: local_dev_database
     env_file:
      - ../container_environments/test_stack.yaml
-    # volumes:
-    #   - postgres_data:/var/lib/postgresql/data
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
 
-# volumes:
-#   postgres_data:
-#     external: false
+volumes:
+  postgres_data:
+    external: false

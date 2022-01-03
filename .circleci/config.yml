@@ -114,8 +114,8 @@ jobs:
             echo "-- Deploying K8s app-stack to ${CLUSTER_REGION}..."
             bash bash-scripts/app-stacks/deploy-k8s-app-stack.sh
             # this is inelegant, but avoids DNS cacheing problems in test script
-            echo "-- Sleeping 120 seconds..."
-            sleep 120
+            echo "-- Sleeping 180 seconds..."
+            sleep 180
             echo "-- Running API integration-tests against K8s app-stack..."
             bash bash-scripts/testing/test-kubernetes-stack.sh
             echo "-- Destroying app-stack..."
@@ -141,6 +141,7 @@ jobs:
             export STACK_NAME=stellarbot
             export SOURCE_PATH="kubernetes/us-east-2/dev"
             export ROOT_PATH=.
+            export WORKER_REPLICAS=3
             echo "SOURCE_PATH: ${SOURCE_PATH}"
             echo "IMAGE_TAG: ${IMAGE_TAG}"
             echo "STACK_NAME: ${STACK_NAME}"
@@ -149,8 +150,8 @@ jobs:
             bash bash-scripts/k8s-clusters/pull-kube-config.sh
             echo "-- Deploying K8s app-stack to ${CLUSTER_REGION}..."
             bash bash-scripts/app-stacks/deploy-k8s-app-stack.sh
-            echo "-- Sleeping 120 seconds..."
-            sleep 120
+            echo "-- Sleeping 180 seconds..."
+            sleep 180
             echo "-- Running API integration-tests against '${IMAGE_TAG}' app-stack..."
             bash bash-scripts/testing/test-kubernetes-stack.sh
             echo "-- Kubernetes-stack integration tests succeeded."

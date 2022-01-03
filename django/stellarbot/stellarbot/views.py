@@ -1,8 +1,10 @@
 import json
+from datetime import datetime
 
 from django.db.utils import ProgrammingError
 from django.utils.timezone import now
 from django.conf import settings
+from django.db.models import Q
 
 from celery.exceptions import TimeoutError
 
@@ -13,15 +15,45 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.permissions import AllowAny
 
 from api.tasks import celery_worker_health_check
-from api.models import Ledger
+from api.models import Ledger, WorkerLogLine, AssetPair, Asset
 
 
 class LedgersView(APIView):
 
     def get(self, request, *args, **kwargs):
-        ledger = Ledger.objects.first()
-        return Response({'data': json.loads(ledger.raw_json if ledger else '{}'), 
-                         'timestamp': str(ledger.timestamp if ledger else '')})
+
+        whitelisted_assets = list(
+            Asset.objects.filter(whitelisted=True).order_by('asset_code')[:settings.OBJECTS_RETURN_LIMIT])
+
+        whitelisted_asset_pairs = list(
+            AssetPair.objects.filter(whitelisted=True).order_by('-last_updated')[:settings.OBJECTS_RETURN_LIMIT])
+
+        positive_cycle_asset_pairs = sorted(list(AssetPair.objects.filter(
+                                                Q(base_price_xlm_error__gt=0) | Q(counter_price_xlm_error__gt=0),
+                                                whitelisted=True
+                                            )), 
+                                            key=lambda x : max(x.base_price_xlm_error, x.counter_price_xlm_error),
+                                            reverse=True
+                                        )
+        logs = list(
+            WorkerLogLine.objects.all().order_by('-timestamp')[:settings.OBJECTS_RETURN_LIMIT])
+
+
+        return Response({
+
+            'positive_cycle_asset_pairs': [ap.pair_desc_list for ap in positive_cycle_asset_pairs],
+            'wl_asset_pairs': [ap.pair_desc_list for ap in whitelisted_asset_pairs],
+            'wl_assets': [a.asset_desc for a in whitelisted_assets],
+
+            'positive_cycle_asset_pairs_count': len(positive_cycle_asset_pairs),
+            'wl_asset_pairs_count': len(whitelisted_asset_pairs),
+            'wl_assets_count': len(whitelisted_assets),
+
+            'logs': [l.entry for l in logs],
+            'latest_log': max(l.timestamp for l in logs),
+
+            'timestamp': str(datetime.utcnow())
+        })
 
 
 class AppHealthCheckView(APIView):
@@ -77,14 +109,15 @@ class DataLoadedCheckView(APIView):
 
     def get(self, request, *args, **kwargs):
         try:
-            # run a DB query (from the app node)
-            if Ledger.objects.count() > 0:
-                return Response({'status': 'healthy',
-                                 'ledger_count': Ledger.objects.count()})
-            else: 
-                return Response(
-                    data={'status': 'unhealthy',
-                          'reason': 'no data loaded'},
-                    status=HTTP_412_PRECONDITION_FAILED)
+            # TODO: do something more interesting here
+            # # run a DB query (from the app node)
+            # if Ledger.objects.count() > 0:
+            return Response({'status': 'healthy',
+                             'ledger_count': Ledger.objects.count()})
+            # else: 
+            #     return Response(
+            #         data={'status': 'unhealthy',
+            #               'reason': 'no data loaded'},
+            #         status=HTTP_412_PRECONDITION_FAILED)
         except ProgrammingError as e:
             return postgres_error_response(e)
