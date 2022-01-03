@@ -16,7 +16,7 @@ sleep 30
 #     --name stacktester \
 #     --network container:local_prod_webapp \
 #     -e SERVICE="localhost:8000" \
-#     -e TESTERUSER_PASSWORD \
+#     -e TESTERUSER_PASSWORD=entendre-wist-surgeon \
 #     stacktest ./integration-tests.sh
 
 docker run --rm \

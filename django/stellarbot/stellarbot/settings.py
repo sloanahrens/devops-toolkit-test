@@ -24,9 +24,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = '+*ll0!%&$(uco$wl4d@7esvw123k@1cs^psp!@xvlle+88c@fv'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
-ALLOWED_HOSTS = ['0.0.0.0', 'localhost', 'webapp']
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -155,7 +155,7 @@ REST_FRAMEWORK = {
 from datetime import timedelta
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=120),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
     'ROTATE_REFRESH_TOKENS': False,
     'BLACKLIST_AFTER_ROTATION': True,
@@ -181,6 +181,9 @@ SIMPLE_JWT = {
     'SLIDING_TOKEN_LIFETIME': timedelta(minutes=5),
     'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
 }
+
+# # TODO: does this matter?
+# CSRF_TRUSTED_ORIGINS = ['https://*.sloanahrens.com']
 
 #####
 # Celery settings
@@ -209,10 +212,46 @@ CELERY_TIMEZONE = 'America/Chicago'
 from celery.schedules import crontab
 
 CELERY_BEAT_SCHEDULE = {
-    'data-update': {
-        'task': 'api.tasks.load_data',
-        # execute every fifteen seconds
-        'schedule': 15,
+    'clear-logs': {
+        'task': 'api.tasks.clear_old_event_logs',
+        'schedule': 600,
     }
 }
 
+
+# App settings:
+#####
+
+# how many seconds to wait before firing next task in the chain
+API_REQUEST_DELAY = 3
+
+# how many hours back to query
+API_HISTORY_HOURS = 7 * 24
+
+# minimum qualifications to consider and asset
+ASSET_AMOUNT_THRESHOLD = 1e9
+ASSET_NUM_ACCOUNTS_THRESHOLD = 1000
+ASSET_VOLUME_THRESHOLD = 1
+ASSET_TRADE_THRESHOLD = 1
+
+# minimum qualifications to whitelist an asset pair (WIP)
+ASSET_PAIR_BASE_VOLUME_THRESHOLD = 100
+ASSET_PAIR_COUNTER_VOLUME_THRESHOLD = 100
+ASSET_PAIR_TRADE_THRESHOLD = 1
+
+# which errors to notice (WIP)
+CONVERSION_RATE_ERROR_THRESHOLD = 1e-6
+
+# how often to update asset pairs
+TICK_SECONDS = 150
+
+OBJECTS_RETURN_LIMIT = 200
+
+VIEWERUSERS = [
+    'sloan',
+    'sarah',
+    'dallas',
+    'james',
+    'daniel',
+    'jeremiah'
+]

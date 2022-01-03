@@ -16,6 +16,540 @@
   },
   "endpoints": [
     {
+      "endpoint": "/admin/logout/",
+      "method": "GET",
+      "output_encoding": "no-op",
+      "headers_to_pass": [
+        "*"
+      ],
+      "querystring_params": [
+        "*"
+      ], 
+      "backend": [
+        {
+          "url_pattern": "/admin/logout/",
+          "encoding": "no-op",
+          "sd": "static",
+          "method": "GET",
+          "extra_config": {},
+          "disable_host_sanitize": true,
+          "host": [
+            "http://webapp:8000"
+          ]
+        }
+      ]
+    },
+    {
+      "endpoint": "/admin/logout/",
+      "method": "POST",
+      "output_encoding": "no-op",
+      "headers_to_pass": [
+        "*"
+      ],
+      "querystring_params": [
+        "*"
+      ], 
+      "backend": [
+        {
+          "url_pattern": "/admin/logout/",
+          "encoding": "no-op",
+          "sd": "static",
+          "method": "POST",
+          "extra_config": {},
+          "disable_host_sanitize": true,
+          "host": [
+            "http://webapp:8000"
+          ]
+        }
+      ]
+    },
+    {
+      "endpoint": "/admin/login/",
+      "method": "GET",
+      "output_encoding": "no-op",
+      "headers_to_pass": [
+        "*"
+      ],
+      "querystring_params": [
+        "*"
+      ], 
+      "backend": [
+        {
+          "url_pattern": "/admin/login/",
+          "encoding": "no-op",
+          "sd": "static",
+          "method": "GET",
+          "extra_config": {},
+          "disable_host_sanitize": true,
+          "host": [
+            "http://webapp:8000"
+          ]
+        }
+      ]
+    },
+    {
+      "endpoint": "/admin/login/",
+      "method": "POST",
+      "output_encoding": "no-op",
+      "headers_to_pass": [
+        "*"
+      ],
+      "querystring_params": [
+        "*"
+      ], 
+      "backend": [
+        {
+          "url_pattern": "/admin/login/",
+          "encoding": "no-op",
+          "sd": "static",
+          "method": "POST",
+          "extra_config": {},
+          "disable_host_sanitize": true,
+          "host": [
+            "http://webapp:8000"
+          ]
+        }
+      ]
+    },
+    {
+      "endpoint": "/admin/auth/user/",
+      "method": "GET",
+      "output_encoding": "no-op",
+      "headers_to_pass": [
+        "*"
+      ],
+      "backend": [
+        {
+          "url_pattern": "/admin/auth/user/",
+          "encoding": "no-op",
+          "sd": "static",
+          "method": "GET",
+          "extra_config": {},
+          "disable_host_sanitize": true,
+          "host": [
+            "http://webapp:8000"
+          ]
+        }
+      ]
+    },
+    {
+      "endpoint": "/admin/auth/user/{id}/change/",
+      "method": "GET",
+      "output_encoding": "no-op",
+      "headers_to_pass": [
+        "*"
+      ],
+      "backend": [
+        {
+          "url_pattern": "/admin/auth/user/{id}/change/",
+          "encoding": "no-op",
+          "sd": "static",
+          "method": "GET",
+          "extra_config": {},
+          "disable_host_sanitize": true,
+          "host": [
+            "http://webapp:8000"
+          ]
+        }
+      ]
+    },
+    {
+      "endpoint": "/admin/auth/user/{id}/change/",
+      "method": "POST",
+      "output_encoding": "no-op",
+      "headers_to_pass": [
+        "*"
+      ],
+      "backend": [
+        {
+          "url_pattern": "/admin/auth/user/{id}/change/",
+          "encoding": "no-op",
+          "sd": "static",
+          "method": "POST",
+          "extra_config": {},
+          "disable_host_sanitize": true,
+          "host": [
+            "http://webapp:8000"
+          ]
+        }
+      ]
+    },
+    {
+      "endpoint": "/admin/auth/group/",
+      "method": "GET",
+      "output_encoding": "no-op",
+      "headers_to_pass": [
+        "*"
+      ],
+      "backend": [
+        {
+          "url_pattern": "/admin/auth/group/",
+          "encoding": "no-op",
+          "sd": "static",
+          "method": "GET",
+          "extra_config": {},
+          "disable_host_sanitize": true,
+          "host": [
+            "http://webapp:8000"
+          ]
+        }
+      ]
+    },
+    {
+      "endpoint": "/admin/auth/group/{id}/change/",
+      "method": "GET",
+      "output_encoding": "no-op",
+      "headers_to_pass": [
+        "*"
+      ],
+      "backend": [
+        {
+          "url_pattern": "/admin/auth/group/{id}/change/",
+          "encoding": "no-op",
+          "sd": "static",
+          "method": "GET",
+          "extra_config": {},
+          "disable_host_sanitize": true,
+          "host": [
+            "http://webapp:8000"
+          ]
+        }
+      ]
+    },
+    {
+      "endpoint": "/admin/auth/group/{id}/change/",
+      "method": "POST",
+      "output_encoding": "no-op",
+      "headers_to_pass": [
+        "*"
+      ],
+      "backend": [
+        {
+          "url_pattern": "/admin/auth/group/{id}/change/",
+          "encoding": "no-op",
+          "sd": "static",
+          "method": "POST",
+          "extra_config": {},
+          "disable_host_sanitize": true,
+          "host": [
+            "http://webapp:8000"
+          ]
+        }
+      ]
+    },
+    {
+      "endpoint": "/admin/api/workerlogline/{id}/change/",
+      "method": "GET",
+      "output_encoding": "no-op",
+      "headers_to_pass": [
+        "*"
+      ],
+      "backend": [
+        {
+          "url_pattern": "/admin/api/workerlogline/{id}/change/",
+          "encoding": "no-op",
+          "sd": "static",
+          "method": "GET",
+          "extra_config": {},
+          "disable_host_sanitize": true,
+          "host": [
+            "http://webapp:8000"
+          ]
+        }
+      ]
+    },
+    {
+      "endpoint": "/admin/api/workerlogline/",
+      "method": "GET",
+      "output_encoding": "no-op",
+      "headers_to_pass": [
+        "*"
+      ],
+      "backend": [
+        {
+          "url_pattern": "/admin/api/workerlogline/",
+          "encoding": "no-op",
+          "sd": "static",
+          "method": "GET",
+          "extra_config": {},
+          "disable_host_sanitize": true,
+          "host": [
+            "http://webapp:8000"
+          ]
+        }
+      ]
+    },
+    {
+      "endpoint": "/admin/api/assetpair/{id}/change/",
+      "method": "GET",
+      "output_encoding": "no-op",
+      "headers_to_pass": [
+        "*"
+      ],
+      "backend": [
+        {
+          "url_pattern": "/admin/api/assetpair/{id}/change/",
+          "encoding": "no-op",
+          "sd": "static",
+          "method": "GET",
+          "extra_config": {},
+          "disable_host_sanitize": true,
+          "host": [
+            "http://webapp:8000"
+          ]
+        }
+      ]
+    },
+    {
+      "endpoint": "/admin/api/assetpair/",
+      "method": "GET",
+      "output_encoding": "no-op",
+      "headers_to_pass": [
+        "*"
+      ],
+      "backend": [
+        {
+          "url_pattern": "/admin/api/assetpair/",
+          "encoding": "no-op",
+          "sd": "static",
+          "method": "GET",
+          "extra_config": {},
+          "disable_host_sanitize": true,
+          "host": [
+            "http://webapp:8000"
+          ]
+        }
+      ]
+    },
+    {
+      "endpoint": "/admin/api/asset/{id}/change/",
+      "method": "GET",
+      "output_encoding": "no-op",
+      "headers_to_pass": [
+        "*"
+      ],
+      "backend": [
+        {
+          "url_pattern": "/admin/api/asset/",
+          "encoding": "no-op",
+          "sd": "static",
+          "method": "GET",
+          "extra_config": {},
+          "disable_host_sanitize": true,
+          "host": [
+            "http://webapp:8000"
+          ]
+        }
+      ]
+    },
+    {
+      "endpoint": "/admin/api/asset/",
+      "method": "GET",
+      "output_encoding": "no-op",
+      "headers_to_pass": [
+        "*"
+      ],
+      "backend": [
+        {
+          "url_pattern": "/admin/api/asset/",
+          "encoding": "no-op",
+          "sd": "static",
+          "method": "GET",
+          "extra_config": {},
+          "disable_host_sanitize": true,
+          "host": [
+            "http://webapp:8000"
+          ]
+        }
+      ]
+    },
+    {
+      "endpoint": "/admin/",
+      "method": "GET",
+      "output_encoding": "no-op",
+      "headers_to_pass": [
+        "*"
+      ],
+      "querystring_params": [
+        "*"
+      ], 
+      "backend": [
+        {
+          "url_pattern": "/admin/",
+          "encoding": "no-op",
+          "sd": "static",
+          "method": "GET",
+          "extra_config": {},
+          "disable_host_sanitize": true,
+          "host": [
+            "http://webapp:8000"
+          ]
+        }
+      ]
+    },
+    {
+      "endpoint": "/admin/jsi18n/",
+      "method": "GET",
+      "output_encoding": "no-op",
+      "headers_to_pass": [
+        "*"
+      ],
+      "querystring_params": [
+        "*"
+      ], 
+      "backend": [
+        {
+          "url_pattern": "/admin/jsi18n/",
+          "encoding": "no-op",
+          "sd": "static",
+          "method": "GET",
+          "extra_config": {},
+          "disable_host_sanitize": true,
+          "host": [
+            "http://webapp:8000"
+          ]
+        }
+      ]
+    },
+    {
+      "endpoint": "/static/admin/img/{filename}",
+      "method": "GET",
+      "output_encoding": "no-op",
+      "headers_to_pass": [
+        "Authorization",
+        "Content-Type",
+        "Host"
+      ],
+      "backend": [
+        {
+          "url_pattern": "/static/admin/img/{filename}",
+          "encoding": "no-op",
+          "sd": "static",
+          "method": "GET",
+          "extra_config": {},
+          "disable_host_sanitize": true,
+          "host": [
+            "http://webapp:8000"
+          ]
+        }
+      ]
+    },
+    {
+      "endpoint": "/static/admin/css/{filename}",
+      "method": "GET",
+      "output_encoding": "no-op",
+      "headers_to_pass": [
+        "Authorization",
+        "Content-Type",
+        "Host"
+      ],
+      "backend": [
+        {
+          "url_pattern": "/static/admin/css/{filename}",
+          "encoding": "no-op",
+          "sd": "static",
+          "method": "GET",
+          "extra_config": {},
+          "disable_host_sanitize": true,
+          "host": [
+            "http://webapp:8000"
+          ]
+        }
+      ]
+    },
+    {
+      "endpoint": "/static/admin/fonts/{filename}",
+      "method": "GET",
+      "output_encoding": "no-op",
+      "headers_to_pass": [
+        "Authorization",
+        "Content-Type",
+        "Host"
+      ],
+      "backend": [
+        {
+          "url_pattern": "/static/admin/fonts/{filename}",
+          "encoding": "no-op",
+          "sd": "static",
+          "method": "GET",
+          "extra_config": {},
+          "disable_host_sanitize": true,
+          "host": [
+            "http://webapp:8000"
+          ]
+        }
+      ]
+    },
+    {
+      "endpoint": "/static/admin/js/admin/{filename}",
+      "method": "GET",
+      "output_encoding": "no-op",
+      "headers_to_pass": [
+        "Authorization",
+        "Content-Type",
+        "Host"
+      ],
+      "backend": [
+        {
+          "url_pattern": "/static/admin/js/admin/{filename}",
+          "encoding": "no-op",
+          "sd": "static",
+          "method": "GET",
+          "extra_config": {},
+          "disable_host_sanitize": true,
+          "host": [
+            "http://webapp:8000"
+          ]
+        }
+      ]
+    },
+    {
+      "endpoint": "/static/admin/js/vendor/jquery/{filename}",
+      "method": "GET",
+      "output_encoding": "no-op",
+      "headers_to_pass": [
+        "Authorization",
+        "Content-Type",
+        "Host"
+      ],
+      "backend": [
+        {
+          "url_pattern": "/static/admin/js/vendor/jquery/{filename}",
+          "encoding": "no-op",
+          "sd": "static",
+          "method": "GET",
+          "extra_config": {},
+          "disable_host_sanitize": true,
+          "host": [
+            "http://webapp:8000"
+          ]
+        }
+      ]
+    },
+    {
+      "endpoint": "/static/admin/js/vendor/xregexp/{filename}",
+      "method": "GET",
+      "output_encoding": "no-op",
+      "headers_to_pass": [
+        "Authorization",
+        "Content-Type",
+        "Host"
+      ],
+      "backend": [
+        {
+          "url_pattern": "/static/admin/js/vendor/xregexp/{filename}",
+          "encoding": "no-op",
+          "sd": "static",
+          "method": "GET",
+          "extra_config": {},
+          "disable_host_sanitize": true,
+          "host": [
+            "http://webapp:8000"
+          ]
+        }
+      ]
+    },
+    {
       "endpoint": "/api/v0.1/health/app/",
       "method": "GET",
       "output_encoding": "no-op",
