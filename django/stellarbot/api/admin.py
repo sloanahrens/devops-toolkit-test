@@ -165,8 +165,6 @@ class AssetPairAdmin(admin.ModelAdmin):
     list_filter = (
           'timestamp',
           'whitelisted',
-          'counter_price_xlm_error',
-          'base_price_xlm_error',
           'srbc_path_count',
           'sscb_path_count',
           'srcb_path_count',
