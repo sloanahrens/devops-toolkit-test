@@ -26,13 +26,13 @@ class LedgersView(APIView):
             Asset.objects.filter(whitelisted=True).order_by('asset_code')[:settings.OBJECTS_RETURN_LIMIT])
 
         whitelisted_asset_pairs = list(
-            AssetPair.objects.filter(whitelisted=True).order_by('-last_updated')[:settings.OBJECTS_RETURN_LIMIT])
+            AssetPair.objects.filter(paths_exist=True).order_by('-last_updated')[:settings.OBJECTS_RETURN_LIMIT])
 
         positive_cycle_asset_pairs = sorted(list(AssetPair.objects.filter(
-                                                Q(base_price_xlm_error__gt=0) | Q(counter_price_xlm_error__gt=0),
-                                                whitelisted=True
+                                                base_price_xlm_error__gt=settings.XLM_VAL_ERROR_THRESHOLD,
+                                                paths_exist=True
                                             )), 
-                                            key=lambda x : max(x.base_price_xlm_error, x.counter_price_xlm_error),
+                                            key=lambda x : x.base_price_xlm_error,
                                             reverse=True
                                         )
         logs = list(

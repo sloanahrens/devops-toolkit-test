@@ -85,6 +85,9 @@ function run_kops_bucket_terraform {
     terraform apply --auto-approve
 }
 
+# RDS database
+DEPLOY_RDS=${DEPLOY_RDS-'false'}
+
 function apply_cluster_infrastructure_templates {
 
     # reference to terraform remote state:
@@ -103,6 +106,21 @@ function apply_cluster_infrastructure_templates {
 
     # RDS terraform template will get used here
     ##
+    if [ "${DEPLOY_RDS}" = "true" ]; then
+        source_cluster_env_rds
+        echo "Adding RDS template to project..."
+        cat ${ROOT_PATH}/kubernetes/templates/rds.tf \
+          | sed -e "s@PROJECT_NAME@${PROJECT_NAME}@g" \
+          | sed -e "s@REGION@${REGION}@g" \
+          | sed -e "s@CLUSTER_TYPE@${CLUSTER_TYPE}@g" \
+          | sed -e "s@RDS_INSTANCE_TYPE@${RDS_INSTANCE_TYPE}@g" \
+          | sed -e "s@POSTGRES_VERSION@${POSTGRES_VERSION}@g" \
+          | sed -e "s@POSTGRES_PORT@${POSTGRES_PORT}@g" \
+          | sed -e "s@POSTGRES_DB@${POSTGRES_DB}@g" \
+          | sed -e "s@POSTGRES_USER@${POSTGRES_USER}@g" \
+          | sed -e "s@POSTGRES_PASSWORD@${POSTGRES_PASSWORD}@g" \
+          > ${SOURCE_PATH}/cluster/rds.tf
+    fi
 }
 
 function run_cluster_terraform {

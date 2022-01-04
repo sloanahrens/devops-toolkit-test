@@ -130,7 +130,7 @@ def get_price_rel_error(a, b):
     return geo_log, report
 
 
-# randomized asset-pair scan
+# chained, randomized asset-pair scan
 @app.task()
 def random_asset_pair_scan():
 
@@ -150,8 +150,8 @@ def random_asset_pair_scan():
     counter_asset = Asset.objects.get(pk=choice(asset_primary_key_list))
 
     asset_pair = AssetPair.objects.filter(counter_asset=counter_asset, base_asset=base_asset).first()
-    if not asset_pair:
-        asset_pair = AssetPair.objects.filter(counter_asset=base_asset, base_asset=counter_asset).first()
+    # if not asset_pair:
+    #     asset_pair = AssetPair.objects.filter(counter_asset=base_asset, base_asset=counter_asset).first()
     if asset_pair:
         if asset_pair.timestamp.timestamp() > (datetime.now() - timedelta(seconds=settings.TICK_SECONDS)).timestamp():
             log_print(f'*** {asset_pair} last updated {asset_pair.timestamp}. Let\'s wait {settings.TICK_SECONDS} seconds.')
@@ -162,137 +162,72 @@ def random_asset_pair_scan():
     
     random_asset_pair_scan.apply_async(countdown=settings.API_REQUEST_DELAY)
 
-    asset_pair.whitelisted = False
-    asset_pair.save()
-
     asset_pair.raw_json = ''
 
-    forward_agg = get_latest_asset_aggregation(counter_asset=asset_pair.counter_asset,
-                                               base_asset=asset_pair.base_asset)
-    if forward_agg:
-        asset_pair.raw_json += json.dumps(forward_agg, indent=2)
-        asset_pair.forward_trade_count = int(forward_agg['trade_count'])
-        asset_pair.forward_base_volume = float(forward_agg['base_volume'])
-        asset_pair.forward_counter_volume = float(forward_agg['counter_volume'])
-        asset_pair.forward_avg = float(forward_agg['avg'])
-        asset_pair.forward_high = float(forward_agg['high'])
-        asset_pair.forward_low = float(forward_agg['low'])
-        asset_pair.forward_open = float(forward_agg['open'])
-        asset_pair.forward_close = float(forward_agg['close'])
+    # market data for pair, if it exists
+    agg = get_latest_asset_aggregation(counter_asset=asset_pair.counter_asset,
+                                       base_asset=asset_pair.base_asset)
+    if agg:
+        asset_pair.raw_json += json.dumps(agg, indent=2)
+        asset_pair.trade_count = int(agg['trade_count'])
+        asset_pair.base_volume = float(agg['base_volume'])
+        asset_pair.counter_volume = float(agg['counter_volume'])
+        asset_pair.avg = float(agg['avg'])
+        asset_pair.high = float(agg['high'])
+        asset_pair.low = float(agg['low'])
+        asset_pair.open = float(agg['open'])
+        asset_pair.close = float(agg['close'])
 
-    backward_agg = get_latest_asset_aggregation(counter_asset=asset_pair.base_asset,
-                                                base_asset=asset_pair.counter_asset)
-    if backward_agg:
-        asset_pair.raw_json += json.dumps(backward_agg, indent=2)
-        asset_pair.backward_trade_count = int(backward_agg['trade_count'])
-        asset_pair.backward_base_volume = float(backward_agg['base_volume'])
-        asset_pair.backward_counter_volume = float(backward_agg['counter_volume'])
-        asset_pair.backward_avg = float(backward_agg['avg'])
-        asset_pair.backward_high = float(backward_agg['high'])
-        asset_pair.backward_low = float(backward_agg['low'])
-        asset_pair.backward_open = float(backward_agg['open'])
-        asset_pair.backward_close = float(backward_agg['close'])
+    asset_pair.recent_direct_market = True if asset_pair.close else False
 
-    if asset_pair.forward_close and asset_pair.backward_close:
-        asset_pair.recent_direct_market = True
-        asset_pair.direct_market_error = 1 - asset_pair.forward_close * asset_pair.backward_close
-    else:
-        asset_pair.recent_direct_market = False
-
-
-    # PATHS
-
+    # PATHS (base -> counter -> base)
     #####
-    # strict-receive, buy 1 counter, minimize the amount of base I have to spend
-    # minimum base-asset I have to spend to buy 1 counter-asset
-    # min_base_spend units: base/counter
+    # we want to look for transactions ~ TARGET_TX_AMT_IN_XLM
+    asset_pair.counter_asset_tx_amt = settings.TARGET_TX_AMT_IN_XLM / asset_pair.counter_asset.price
+
+    # strict-receive, buy x counter-asset
+    # min base I have to spend to buy x counter
     srbc = make_strict_receive_path_request(source_asset=asset_pair.base_asset,
                                             destination_asset=asset_pair.counter_asset,
-                                            destination_amount=1)
+                                            destination_amount=asset_pair.counter_asset_tx_amt)
     asset_pair.srbc_raw_json = json.dumps(srbc, indent=2)
     asset_pair.srbc_path_count = len(srbc) if srbc else 0
     asset_pair.srbc_min_base_spend = min(float(r['source_amount']) for r in srbc) if srbc else 0.0
 
     #####
-    # strict-send, sell 1 counter, maximize the amount of base I can buy
-    # max base-asset I can buy for 1 counter-asset
-    # max_base_buy units: base/counter
+    # strict-send, sell x counter-asset
+    # max base I can buy for x counter
     sscb = make_strict_send_path_request(source_asset=asset_pair.counter_asset,
                                          destination_asset=asset_pair.base_asset,
-                                         source_amount=1)
+                                         source_amount=asset_pair.counter_asset_tx_amt)
     asset_pair.sscb_raw_json = json.dumps(sscb, indent=2)
     asset_pair.sscb_path_count = len(sscb) if sscb else 0
     asset_pair.sscb_max_base_buy = max(float(r['destination_amount']) for r in sscb) if sscb else 0.0
 
     #####
-    # strict-receive, buy 1 base, minimize the amount of counter I have to spend
-    # min counter-asset I have to spend to buy 1 base-asset
-    # min_counter_spend units: counter/base
-    srcb = make_strict_receive_path_request(source_asset=asset_pair.counter_asset,
-                                            destination_asset=asset_pair.base_asset,
-                                            destination_amount=1)
-    asset_pair.srcb_raw_json = json.dumps(srcb, indent=2)
-    asset_pair.srcb_path_count = len(srcb) if srcb else 0
-    asset_pair.srcb_min_counter_spend = min(float(r['source_amount']) for r in srcb) if srcb else 0.0
-    
-    #####
-    # strict-send, sell 1 base, maximize amount of counter I can buy
-    # max counter-asset I can buy for 1 base-asset
-    # max_counter_buy units: counter/base
-    ssbc = make_strict_send_path_request(source_asset=asset_pair.base_asset,
-                                         destination_asset=asset_pair.counter_asset,
-                                         source_amount=1)
-    asset_pair.ssbc_raw_json = json.dumps(ssbc, indent=2)
-    asset_pair.ssbc_path_count = len(ssbc) if ssbc else 0
-    asset_pair.ssbc_max_counter_buy = max(float(r['destination_amount']) for r in ssbc) if ssbc else 0.0
-
-    #####
-    # inverses
-    asset_pair.inverse_max_base_buy = 1 / asset_pair.sscb_max_base_buy if asset_pair.sscb_max_base_buy else 0
-    asset_pair.inverse_min_base_spend= 1 / asset_pair.srbc_min_base_spend if asset_pair.srbc_min_base_spend else 0
-
-    asset_pair.inverse_max_counter_buy = 1 / asset_pair.ssbc_max_counter_buy if asset_pair.ssbc_max_counter_buy else 0
-    asset_pair.inverse_min_counter_spend = 1 / asset_pair.srcb_min_counter_spend if asset_pair.srcb_min_counter_spend else 0
-    #####
-
-    #####
-    # absolute errors
+    # absolute error
     asset_pair.base_price_abs_error = asset_pair.sscb_max_base_buy - asset_pair.srbc_min_base_spend
-    asset_pair.counter_price_abs_error = asset_pair.ssbc_max_counter_buy - asset_pair.srcb_min_counter_spend
     
     #####
-    # relative errors
-    asset_pair.base_price_rel_error, base_error_report = get_price_rel_error(asset_pair.sscb_max_base_buy, asset_pair.srbc_min_base_spend)
-    asset_pair.counter_price_rel_error, counter_error_report = get_price_rel_error(asset_pair.ssbc_max_counter_buy, asset_pair.srcb_min_counter_spend)
+    # relative error
+    asset_pair.base_price_rel_error, base_error_report = get_price_rel_error(
+                                                            asset_pair.sscb_max_base_buy, 
+                                                            asset_pair.srbc_min_base_spend)
     #####
-
-    #####
-    # absolute errors, in XLM
+    # absolute error, in XLM
     asset_pair.base_price_xlm_error = asset_pair.base_price_abs_error / asset_pair.base_asset.price
-    asset_pair.counter_price_xlm_error = asset_pair.counter_price_abs_error / asset_pair.counter_asset.price
 
-    if all([count > 0 for count in [asset_pair.srcb_path_count,
-                                    asset_pair.sscb_path_count,
-                                    asset_pair.srbc_path_count,
-                                    asset_pair.ssbc_path_count]]):
-        asset_pair.whitelisted = True
-    else:
-        log_print(f'{asset_pair} not whitelisted due to missing paths.')
+    if asset_pair.srbc_path_count > 0 and asset_pair.sscb_path_count > 0:
+        asset_pair.paths_exist = True
 
-
-    asset_pair.raw_json += json.dumps({
-            'base_price_errors': base_error_report,
-            'counter_price_errors': counter_error_report
-        }, indent=2)
-
-    log_print('-----')
-    log_print(f'Spend {asset_pair.srbc_min_base_spend} {asset_pair.base_asset.asset_code} to buy 1 {asset_pair.counter_asset.asset_code}')
-    log_print(f'Spend 1 {asset_pair.counter_asset.asset_code} to buy {asset_pair.sscb_max_base_buy} {asset_pair.base_asset.asset_code}')
-    log_print(f'Spend {asset_pair.srcb_min_counter_spend} {asset_pair.counter_asset.asset_code} to buy 1 {asset_pair.base_asset.asset_code}')
-    log_print(f'Spend 1 {asset_pair.base_asset.asset_code} to buy {asset_pair.ssbc_max_counter_buy} {asset_pair.counter_asset.asset_code}')
-    log_print('-----')
+    asset_pair.raw_json += json.dumps({'base_price_errors': base_error_report}, indent=2)
 
     asset_pair.save()
+
+    log_print('-----')
+    log_print(asset_pair.srbc_min_base_spend_desc)
+    log_print(asset_pair.sscb_max_base_buy_desc)
+    log_print('-----')
 
 
 # chained task for querying stellar network asset list
@@ -305,10 +240,13 @@ def handle_asset_api_sync(href='https://horizon.stellar.org/assets?limit=200&ord
         log_print('*** No records found!')
         raise Exception('No Horizon API records found!')
 
+    # async recursion!
     if 'next' in response['_links'] and response['_links']['next']['href']:
-        # async recursion
         handle_asset_api_sync.apply_async(args=(response['_links']['next']['href'],), 
                                           countdown=2*settings.API_REQUEST_DELAY)
+    else:
+        # we went all the way through the assets, let's wait a few minutes and start over
+        handle_asset_api_sync.apply_async(countdown=settings.TICK_SECONDS)
 
     # log_print(response)
     for asset in response['_embedded']['records']:

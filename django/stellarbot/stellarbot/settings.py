@@ -228,19 +228,17 @@ API_REQUEST_DELAY = 3
 # how many hours back to query
 API_HISTORY_HOURS = 7 * 24
 
-# minimum qualifications to consider and asset
+# minimum qualifications to consider and asset (?)
 ASSET_AMOUNT_THRESHOLD = 1e9
 ASSET_NUM_ACCOUNTS_THRESHOLD = 1000
 ASSET_VOLUME_THRESHOLD = 1
 ASSET_TRADE_THRESHOLD = 1
 
-# minimum qualifications to whitelist an asset pair (WIP)
-ASSET_PAIR_BASE_VOLUME_THRESHOLD = 100
-ASSET_PAIR_COUNTER_VOLUME_THRESHOLD = 100
-ASSET_PAIR_TRADE_THRESHOLD = 1
+# scale transactions to be worth roughly this much XLM
+TARGET_TX_AMT_IN_XLM = 100
 
-# which errors to notice (WIP)
-CONVERSION_RATE_ERROR_THRESHOLD = 1e-6
+# which positive-cycle pairs to notice
+XLM_VAL_ERROR_THRESHOLD = 1e-5
 
 # how often to update asset pairs
 TICK_SECONDS = 150

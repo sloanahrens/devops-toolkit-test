@@ -5,7 +5,7 @@ set -e
 # default to one replica for each microservice
 UI_REPLICAS=${UI_REPLICAS-'1'}
 WEBAPP_REPLICAS=${WEBAPP_REPLICAS-'1'}
-WORKER_REPLICAS=${WORKER_REPLICAS-'3'}
+WORKER_REPLICAS=${WORKER_REPLICAS-'1'}
 API_GATEWAY_REPLICAS=${API_GATEWAY_REPLICAS-'1'}
 
 echo "Deploying k8s stack:"
@@ -23,6 +23,7 @@ echo "Running a few config tests..."
 source "${ROOT_PATH}/bash-scripts/devops-functions.sh"
 validate_source_path
 
+source_cluster_env
 source_cluster_env_rds
 
 validate_aws_config
@@ -48,6 +49,7 @@ echo "REDIS_NAMESPACE@${REDIS_NAMESPACE}"
 echo "SUPERUSER_EMAIL@${SUPERUSER_EMAIL}"
 echo "SUPERUSER_PASSWORD@${SUPERUSER_PASSWORD}"
 echo "TESTERUSER_PASSWORD@${TESTERUSER_PASSWORD}"
+echo "VIEWERUSER_PASSWORD@${VIEWERUSER_PASSWORD}"
 
 SPEC_TEMPLATES_PATH=${ROOT_PATH}/kubernetes/templates/specs
 
@@ -77,13 +79,13 @@ cat ${SPEC_TEMPLATES_PATH}/app-stack-config.yaml \
   | sed -e  "s@REDISNAMESPACE@'${REDIS_NAMESPACE}'@g" \
   | sed -e  "s@SUPERUSERPASSWORD@${SUPERUSER_PASSWORD}@g" \
   | sed -e  "s@TESTERUSERPASSWORD@${TESTERUSER_PASSWORD}@g" \
+  | sed -e  "s@VIEWERUSERPASSWORD@${VIEWERUSER_PASSWORD}@g" \
   | kubectl -n ${STACK_NAME} apply -f -
 
 
-# deploy database
-cat ${SPEC_TEMPLATES_PATH}/database.yaml \
-  | sed -e  "s@STACK_NAME@${STACK_NAME}@g" \
-  | kubectl -n ${STACK_NAME} apply -f -
+#####
+# don't deploy a postgres container since we are using RDS
+#####
 
 # deploy queue
 cat ${SPEC_TEMPLATES_PATH}/queue.yaml \
@@ -95,18 +97,18 @@ cat ${SPEC_TEMPLATES_PATH}/redis.yaml \
   | sed -e  "s@STACK_NAME@${STACK_NAME}@g" \
   | kubectl -n ${STACK_NAME} apply -f -
 
-# # deploy ui
-# cat ${SPEC_TEMPLATES_PATH}/ui.yaml \
-#   | sed -e  "s@ECR_ID@${ECR_ID}@g" \
-#   | sed -e  "s@ECR_REGION@${ECR_REGION}@g" \
-#   | sed -e  "s@PROJECT_NAME@${PROJECT_NAME}@g" \
-#   | sed -e  "s@STACK_NAME@${STACK_NAME}@g" \
-#   | sed -e  "s@IMAGE_TAG@${IMAGE_TAG}@g" \
-#   | sed -e  "s@UI_REPLICAS@${UI_REPLICAS}@g" \
-#   | kubectl -n ${STACK_NAME} apply -f -
+# deploy ui
+cat ${SPEC_TEMPLATES_PATH}/ui.yaml \
+  | sed -e  "s@ECR_ID@${ECR_ID}@g" \
+  | sed -e  "s@ECR_REGION@${ECR_REGION}@g" \
+  | sed -e  "s@PROJECT_NAME@${PROJECT_NAME}@g" \
+  | sed -e  "s@STACK_NAME@${STACK_NAME}@g" \
+  | sed -e  "s@IMAGE_TAG@${IMAGE_TAG}@g" \
+  | sed -e  "s@UI_REPLICAS@${UI_REPLICAS}@g" \
+  | kubectl -n ${STACK_NAME} apply -f -
 
 # deploy webapp
-cat ${SPEC_TEMPLATES_PATH}/webapp-no-api-gateway.yaml \
+cat ${SPEC_TEMPLATES_PATH}/webapp.yaml \
   | sed -e  "s@ECR_ID@${ECR_ID}@g" \
   | sed -e  "s@ECR_REGION@${ECR_REGION}@g" \
   | sed -e  "s@PROJECT_NAME@${PROJECT_NAME}@g" \
@@ -134,16 +136,16 @@ cat ${SPEC_TEMPLATES_PATH}/beat.yaml \
   | sed -e  "s@IMAGE_TAG@${IMAGE_TAG}@g" \
   | kubectl -n ${STACK_NAME} apply -f -
 
-# # deploy api-gateway
-# cat ${SPEC_TEMPLATES_PATH}/api-gateway.yaml \
-#   | sed -e  "s@ECR_ID@${ECR_ID}@g" \
-#   | sed -e  "s@ECR_REGION@${ECR_REGION}@g" \
-#   | sed -e  "s@PROJECT_NAME@${PROJECT_NAME}@g" \
-#   | sed -e  "s@DOMAIN_NAME@${DOMAIN_NAME}@g" \
-#   | sed -e  "s@STACK_NAME@${STACK_NAME}@g" \
-#   | sed -e  "s@IMAGE_TAG@${IMAGE_TAG}@g" \
-#   | sed -e  "s@API_GATEWAY_REPLICAS@${API_GATEWAY_REPLICAS}@g" \
-#   | kubectl -n ${STACK_NAME} apply -f -
+# deploy api-gateway
+cat ${SPEC_TEMPLATES_PATH}/api-gateway.yaml \
+  | sed -e  "s@ECR_ID@${ECR_ID}@g" \
+  | sed -e  "s@ECR_REGION@${ECR_REGION}@g" \
+  | sed -e  "s@PROJECT_NAME@${PROJECT_NAME}@g" \
+  | sed -e  "s@DOMAIN_NAME@${DOMAIN_NAME}@g" \
+  | sed -e  "s@STACK_NAME@${STACK_NAME}@g" \
+  | sed -e  "s@IMAGE_TAG@${IMAGE_TAG}@g" \
+  | sed -e  "s@API_GATEWAY_REPLICAS@${API_GATEWAY_REPLICAS}@g" \
+  | kubectl -n ${STACK_NAME} apply -f -
 
 
 echo "Deployed stack \"${STACK_NAME}\"."

@@ -1,13 +1,13 @@
 #!/bin/bash
 
-export REGION=us-east-2
-export CLUSTER_TYPE=dev
+export REGION=us-west-2
+export CLUSTER_TYPE=prod
 
 export PROJECT_NAME=stellarbot
 
 export DOMAIN=sloanahrens.com
 export R53_HOSTED_ZONE=Z1CDZE44WDSMXZ
-export SSL_CERT_ARN="arn:aws:acm:us-east-2:421987441365:certificate/a49dc1cf-281f-4abf-a2ca-d79379e2f41b"
+export SSL_CERT_ARN="arn:aws:acm:us-west-2:421987441365:certificate/0dfb8a7a-74c7-4468-bf08-fd19c49347b5"
 
 export KUBECONFIG=${SOURCE_PATH}/cluster/kubecfg.yaml
 
@@ -20,19 +20,28 @@ export TERRAFORM_DYNAMODB_TABLE_NAME=${PROJECT_NAME}-terraform-state-${REGION}-$
 export AWS_KEY_NAME=${PROJECT_NAME}-devops-${REGION}-${CLUSTER_TYPE}
 export PRIVATE_KEY_PATH=${ROOT_PATH}/kubernetes/keys/${AWS_KEY_NAME}.pem
 
-export MASTER_ZONES=us-east-2a
-export NODE_ZONES=${MASTER_ZONES}
-export MASTER_SIZE=r5.xlarge
-export NODE_SIZE=r5.large
-export MASTER_COUNT=1
-export NODE_COUNT=1
+export MASTER_ZONES=us-west-2a
+export NODE_ZONES=us-west-2a,us-west-2b
 
-# export WORKER_REPLICAS=3
+export MASTER_COUNT=1
+export NODE_COUNT=2
+
+export MASTER_SIZE=t3.large  # $0.0832/hr
+export NODE_SIZE=t3.small  # $0.0208/hr
+
+export DEPLOY_RDS='true'
+
+export RDS_INSTANCE_TYPE=db.t3.small  # $0.036/hr
+
+# = $0.1608/hr ~= $115/mo
+
+export WORKER_REPLICAS=${WORKER_REPLICAS-2}
 
 export POSTGRES_HOST=database
 export POSTGRES_PORT=5432
 export POSTGRES_USER=k8s_user
 export POSTGRES_DB=db
+
 export RABBITMQ_HOST=queue
 export RABBITMQ_PORT=5672
 export RABBITMQ_DEFAULT_USER=k8s_user
@@ -42,8 +51,8 @@ export REDIS_PORT=6379
 export REDIS_NAMESPACE=0
 export SUPERUSER_EMAIL='admin@nowhere.com'
 
-export SUPERUSER_PASSWORD=${SUPERUSER_PASSWORD-'wren-landmark-pup-eve'}
-export TESTERUSER_PASSWORD=${TESTERUSER_PASSWORD-'entendre-wist-surgeon'}
-export VIEWERUSER_PASSWORD=${VIEWERUSER_PASSWORD-'foot-bezoar-craving'}
-export POSTGRES_PASSWORD=${POSTGRES_PASSWORD-'purse-scandal-seashore-tights'}
-export RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS-'foot-bezoar-craving-distrust'}
+export SUPERUSER_PASSWORD=${SUPERUSER_PASSWORD-'oblong-sorority-nifty-caesar-portrait'}
+export TESTERUSER_PASSWORD=${TESTERUSER_PASSWORD-'yanqui-caesar-connect-affected'}
+export VIEWERUSER_PASSWORD=${VIEWERUSER_PASSWORD-'ranch-nifty-hawk-gorilla-whoa'}
+export POSTGRES_PASSWORD=${POSTGRES_PASSWORD-'backfire-bunny-teacart-portrait'}
+export RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS-'service-ibid-emirate-humdrum'}

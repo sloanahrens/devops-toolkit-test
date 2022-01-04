@@ -27,7 +27,6 @@ export NODE_SIZE=t3.large
 export MASTER_COUNT=1
 export NODE_COUNT=1
 
-
 export POSTGRES_HOST=database
 export POSTGRES_PORT=5432
 export POSTGRES_USER=k8s_user

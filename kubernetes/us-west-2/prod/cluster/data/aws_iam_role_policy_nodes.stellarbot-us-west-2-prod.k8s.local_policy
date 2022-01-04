@@ -20,7 +20,7 @@
         "s3:ListBucketVersions"
       ],
       "Resource": [
-        "arn:aws:s3:::stellarbot-kops-state-us-east-2-dev"
+        "arn:aws:s3:::stellarbot-kops-state-us-west-2-prod"
       ]
     },
     {
@@ -29,15 +29,15 @@
         "s3:Get*"
       ],
       "Resource": [
-        "arn:aws:s3:::stellarbot-kops-state-us-east-2-dev/stellarbot-us-east-2-dev.k8s.local/addons/*",
-        "arn:aws:s3:::stellarbot-kops-state-us-east-2-dev/stellarbot-us-east-2-dev.k8s.local/cluster.spec",
-        "arn:aws:s3:::stellarbot-kops-state-us-east-2-dev/stellarbot-us-east-2-dev.k8s.local/config",
-        "arn:aws:s3:::stellarbot-kops-state-us-east-2-dev/stellarbot-us-east-2-dev.k8s.local/instancegroup/*",
-        "arn:aws:s3:::stellarbot-kops-state-us-east-2-dev/stellarbot-us-east-2-dev.k8s.local/pki/issued/*",
-        "arn:aws:s3:::stellarbot-kops-state-us-east-2-dev/stellarbot-us-east-2-dev.k8s.local/pki/private/kube-proxy/*",
-        "arn:aws:s3:::stellarbot-kops-state-us-east-2-dev/stellarbot-us-east-2-dev.k8s.local/pki/private/kubelet/*",
-        "arn:aws:s3:::stellarbot-kops-state-us-east-2-dev/stellarbot-us-east-2-dev.k8s.local/pki/ssh/*",
-        "arn:aws:s3:::stellarbot-kops-state-us-east-2-dev/stellarbot-us-east-2-dev.k8s.local/secrets/dockerconfig"
+        "arn:aws:s3:::stellarbot-kops-state-us-west-2-prod/stellarbot-us-west-2-prod.k8s.local/addons/*",
+        "arn:aws:s3:::stellarbot-kops-state-us-west-2-prod/stellarbot-us-west-2-prod.k8s.local/cluster.spec",
+        "arn:aws:s3:::stellarbot-kops-state-us-west-2-prod/stellarbot-us-west-2-prod.k8s.local/config",
+        "arn:aws:s3:::stellarbot-kops-state-us-west-2-prod/stellarbot-us-west-2-prod.k8s.local/instancegroup/*",
+        "arn:aws:s3:::stellarbot-kops-state-us-west-2-prod/stellarbot-us-west-2-prod.k8s.local/pki/issued/*",
+        "arn:aws:s3:::stellarbot-kops-state-us-west-2-prod/stellarbot-us-west-2-prod.k8s.local/pki/private/kube-proxy/*",
+        "arn:aws:s3:::stellarbot-kops-state-us-west-2-prod/stellarbot-us-west-2-prod.k8s.local/pki/private/kubelet/*",
+        "arn:aws:s3:::stellarbot-kops-state-us-west-2-prod/stellarbot-us-west-2-prod.k8s.local/pki/ssh/*",
+        "arn:aws:s3:::stellarbot-kops-state-us-west-2-prod/stellarbot-us-west-2-prod.k8s.local/secrets/dockerconfig"
       ]
     },
     {
@@ -45,7 +45,7 @@
       "Action": [
         "s3:Get*"
       ],
-      "Resource": "arn:aws:s3:::stellarbot-kops-state-us-east-2-dev/stellarbot-us-east-2-dev.k8s.local/pki/private/calico-client/*"
+      "Resource": "arn:aws:s3:::stellarbot-kops-state-us-west-2-prod/stellarbot-us-west-2-prod.k8s.local/pki/private/calico-client/*"
     },
     {
       "Effect": "Allow",

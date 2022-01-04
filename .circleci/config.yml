@@ -75,7 +75,7 @@ jobs:
           name: Validate Kubernetes Cluster
           command: |
             set -x
-            export SOURCE_PATH="kubernetes/us-east-2/dev"
+            echo "SOURCE_PATH: ${SOURCE_PATH}"
             source ${SOURCE_PATH}/environment.sh
             export ROOT_PATH=.
             bash bash-scripts/k8s-clusters/pull-kube-config.sh
@@ -101,17 +101,16 @@ jobs:
           name: Build and Test K8s Stack
           command: |
             set -x
+            echo "SOURCE_PATH: ${SOURCE_PATH}"
             export IMAGE_TAG=$(python3 -c "import re; print(re.sub('[^0-9a-zA-Z]+', '-', '${CIRCLE_BRANCH}').lower())")
-            export SOURCE_PATH="kubernetes/us-east-2/dev"
             export ROOT_PATH=.
             source ${SOURCE_PATH}/environment.sh
             export STACK_NAME="ci-${CIRCLE_BUILD_NUM}-${IMAGE_TAG}"
-            echo "SOURCE_PATH: ${SOURCE_PATH}"
             echo "IMAGE_TAG: ${IMAGE_TAG}"
             echo "STACK_NAME: ${STACK_NAME}"
             echo "-- Attempting to pull kubeconfig..."
             bash bash-scripts/k8s-clusters/pull-kube-config.sh
-            echo "-- Deploying K8s app-stack to ${CLUSTER_REGION}..."
+            echo "-- Deploying K8s app-stack into ${CLUSTER_REGION}-${CLUSTER_TYPE}..."
             bash bash-scripts/app-stacks/deploy-k8s-app-stack.sh
             # this is inelegant, but avoids DNS cacheing problems in test script
             echo "-- Sleeping 180 seconds..."
@@ -134,48 +133,28 @@ jobs:
             set -x
             docker build -t stacktest -f docker/stacktest/Dockerfile .
       - run:
-          name: Build and Test Production K8s Stack
+          name: Build and Test Production RDS-backed K8s Stack
           command: |
             set -x
+            echo "SOURCE_PATH: ${SOURCE_PATH}"
             export IMAGE_TAG=master
             export STACK_NAME=stellarbot
-            export SOURCE_PATH="kubernetes/us-east-2/dev"
             export ROOT_PATH=.
             export WORKER_REPLICAS=3
-            echo "SOURCE_PATH: ${SOURCE_PATH}"
             echo "IMAGE_TAG: ${IMAGE_TAG}"
             echo "STACK_NAME: ${STACK_NAME}"
             echo "-- Attempting to pull kubeconfig..."
             source ${SOURCE_PATH}/environment.sh
             bash bash-scripts/k8s-clusters/pull-kube-config.sh
-            echo "-- Deploying K8s app-stack to ${CLUSTER_REGION}..."
-            bash bash-scripts/app-stacks/deploy-k8s-app-stack.sh
+            echo "-- Destroying existing ${STACK_NAME} app-stack in ${CLUSTER_REGION}-${CLUSTER_TYPE}..."
+            bash bash-scripts/app-stacks/destroy-k8s-app-stack.sh
+            echo "-- Deploying new {STACK_NAME} app-stack in ${CLUSTER_REGION}-${CLUSTER_TYPE}..."
+            bash bash-scripts/app-stacks/deploy-k8s-app-stack-rds.sh
             echo "-- Sleeping 180 seconds..."
             sleep 180
             echo "-- Running API integration-tests against '${IMAGE_TAG}' app-stack..."
             bash bash-scripts/testing/test-kubernetes-stack.sh
             echo "-- Kubernetes-stack integration tests succeeded."
-
-  # legacy_stack_deployment:
-  #   <<: *defaults
-  #   steps:
-  #     - checkout
-  #     - setup_remote_docker:
-  #         version: '20.10.2'
-  #     - run:
-  #         name: Build and Test Production EC2/Docker-Compose Stack
-  #         command: |
-  #           set -x
-  #           export REGION=us-east-1
-  #           export DEPLOYMENT_TYPE=production
-  #           export R53_ZONE=Z1CDZE44WDSMXZ
-  #           export AWS_KEY_NAME=devops-toolkit-key
-  #           export ROOT_PATH=/root/project
-  #           docker build -t stacktest -f docker/stacktest/Dockerfile .
-  #           bash bash-scripts/legacy-aws/deploy-docker-compose-ec2-rds-stack.sh
-  #           sleep 180
-  #           docker run -e SERVICE='https://master.stellarbotdev.com/api/v0.1' -e TESTERUSER_PASSWORD stacktest ./integration-tests.sh
-
 
 workflows:
   version: 2

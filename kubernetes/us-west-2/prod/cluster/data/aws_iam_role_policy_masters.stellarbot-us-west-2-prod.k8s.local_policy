@@ -43,7 +43,7 @@
       ],
       "Condition": {
         "StringEquals": {
-          "ec2:ResourceTag/KubernetesCluster": "stellarbot-us-east-2-dev.k8s.local"
+          "ec2:ResourceTag/KubernetesCluster": "stellarbot-us-west-2-prod.k8s.local"
         }
       },
       "Effect": "Allow",
@@ -71,7 +71,7 @@
       ],
       "Condition": {
         "StringEquals": {
-          "autoscaling:ResourceTag/KubernetesCluster": "stellarbot-us-east-2-dev.k8s.local"
+          "autoscaling:ResourceTag/KubernetesCluster": "stellarbot-us-west-2-prod.k8s.local"
         }
       },
       "Effect": "Allow",
@@ -141,7 +141,7 @@
         "s3:Get*"
       ],
       "Effect": "Allow",
-      "Resource": "arn:aws:s3:::stellarbot-kops-state-us-east-2-dev/stellarbot-us-east-2-dev.k8s.local/*"
+      "Resource": "arn:aws:s3:::stellarbot-kops-state-us-west-2-prod/stellarbot-us-west-2-prod.k8s.local/*"
     },
     {
       "Action": [
@@ -151,7 +151,7 @@
         "s3:PutObject"
       ],
       "Effect": "Allow",
-      "Resource": "arn:aws:s3:::stellarbot-kops-state-us-east-2-dev/stellarbot-us-east-2-dev.k8s.local/backups/etcd/main/*"
+      "Resource": "arn:aws:s3:::stellarbot-kops-state-us-west-2-prod/stellarbot-us-west-2-prod.k8s.local/backups/etcd/main/*"
     },
     {
       "Action": [
@@ -161,7 +161,7 @@
         "s3:PutObject"
       ],
       "Effect": "Allow",
-      "Resource": "arn:aws:s3:::stellarbot-kops-state-us-east-2-dev/stellarbot-us-east-2-dev.k8s.local/backups/etcd/events/*"
+      "Resource": "arn:aws:s3:::stellarbot-kops-state-us-west-2-prod/stellarbot-us-west-2-prod.k8s.local/backups/etcd/events/*"
     },
     {
       "Action": [
@@ -172,7 +172,7 @@
       ],
       "Effect": "Allow",
       "Resource": [
-        "arn:aws:s3:::stellarbot-kops-state-us-east-2-dev"
+        "arn:aws:s3:::stellarbot-kops-state-us-west-2-prod"
       ]
     },
     {
