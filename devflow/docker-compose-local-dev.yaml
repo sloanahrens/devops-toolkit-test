@@ -1,0 +1,128 @@
+version: '3.4'
+
+services:
+
+  # krakend api gateway, source of much security and much consternation
+  api-gateway:
+    image: devopsfaith/krakend:1.1.1
+    restart: unless-stopped
+    tty: true
+    container_name: api_gateway
+    volumes:
+      - ../docker/api-gateway/krakend.json:/etc/krakend/krakend.json
+    command: >
+      run -d --config /etc/krakend/krakend.json
+    ports:
+      - "9999:9999"
+
+  # npm dev server
+  ui:
+    image: ui:dev
+    restart: unless-stopped
+    tty: true
+    container_name: ui
+    stdin_open: true
+    volumes:
+      - ../ui:/app
+    ports:
+      - "80:80"
+
+  # django dev server
+  webapp:
+    image: baseimage
+    restart: unless-stopped
+    tty: true
+    container_name: webapp
+    env_file:
+     - ../container_environments/test_stack.env
+    volumes:
+      - ../django/stellarbot:/src
+    ports:
+      - "8000:8000"
+    links:
+      - postgres
+    command: bash -c "python manage.py migrate && python manage.py create_users && python manage.py shell -c 'from stellarbot.tasks import chained_asset_api_sync; chained_asset_api_sync.apply_async(countdown=60)' && python manage.py runserver 0.0.0.0:8000"
+
+  # celery workers
+  worker1:
+    image: baseimage
+    container_name: worker1
+    env_file:
+     - ../container_environments/test_stack.env
+    environment:
+      C_FORCE_ROOT: "yes"
+    volumes:
+      - ../django/stellarbot:/src
+    links:
+      - postgres
+      - queue
+    command: bash -c "celery --app=stellarbot.celery worker -O fair -c 1 --loglevel=info"
+
+  worker2:
+    image: baseimage
+    container_name: worker2
+    env_file:
+     - ../container_environments/test_stack.env
+    environment:
+      C_FORCE_ROOT: "yes"
+    volumes:
+      - ../django/stellarbot:/src
+    links:
+      - postgres
+      - queue
+    command: bash -c "celery --app=stellarbot.celery worker -O fair -c 1 --loglevel=info"
+
+  worker3:
+    image: baseimage
+    container_name: worker3
+    env_file:
+     - ../container_environments/test_stack.env
+    environment:
+      C_FORCE_ROOT: "yes"
+    volumes:
+      - ../django/stellarbot:/src
+    links:
+      - postgres
+      - queue
+    command: bash -c "celery --app=stellarbot.celery worker -O fair -c 1 --loglevel=info"
+
+  # celery beat (scheduled tasks)
+  beat:
+    image: baseimage
+    container_name: celery_beat
+    env_file:
+     - ../container_environments/test_stack.env
+    environment:
+      C_FORCE_ROOT: "yes"
+    volumes:
+      - ../django/stellarbot:/src
+    links:
+      - postgres
+      - queue
+    command: bash -c "sleep 30 && celery --app=stellarbot.celery beat --loglevel=info"
+
+  queue:
+    image: rabbitmq:alpine
+    container_name: rabbitmq
+    env_file:
+     - ../container_environments/test_stack.env
+
+  redis:
+    image: redis:alpine
+    container_name: local_dev_redis
+    env_file:
+     - ../container_environments/test_stack.env
+
+  postgres:
+    image: postgres:alpine
+    restart: unless-stopped
+    tty: true
+    container_name: postgres
+    env_file:
+     - ../container_environments/test_stack.env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
+    external: false

@@ -1,0 +1,30 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: beat
+  labels:
+    stack: STACK_NAME
+spec:
+  serviceName: beat
+  replicas: 1
+  selector:
+    matchLabels:
+      type: celery-app
+      service: beat
+  template:
+    metadata:
+      labels:
+        type: celery-app
+        service: beat
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+      - name: beat
+        image: ECR_ID.dkr.ecr.ECR_REGION.amazonaws.com/PROJECT_NAME/django:IMAGE_TAG
+        imagePullPolicy: Always
+        envFrom:
+        - configMapRef:
+            name: stack-config
+        command: ["/bin/bash"]
+        args: ["-c", "export C_FORCE_ROOT=true && sleep 20 && celery --app=PROJECT_NAME.celery beat --loglevel=info"]

@@ -1,0 +1,15 @@
+.circleci
+bash-scripts
+container_environments
+devflow
+_static
+db.sqlite3
+__pycache__
+*.md
+.git
+ui/node_modules
+coverage.out
+telepresence.log
+kubernetes
+notes.sh
+legacy

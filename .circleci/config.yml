@@ -1,0 +1,207 @@
+defaults: &defaults
+  docker:
+    - image: sloanahrens/devops-toolkit-ci-dev-env:0.3
+
+version: 2
+jobs:
+
+  python_linting:
+    <<: *defaults
+    steps:
+      - checkout
+
+  javascript_linting:
+    <<: *defaults
+    steps:
+      - checkout
+
+  image_build_test_push:
+    <<: *defaults
+    steps:
+      - checkout
+      - setup_remote_docker:
+          version: '20.10.2'
+      - run:
+          name: Build Images
+          command: |
+            set -x
+            export IMAGE_TAG=$(python3 -c "import re; print(re.sub('[^0-9a-zA-Z]+', '-', '${CIRCLE_BRANCH}').lower())")
+            echo "IMAGE_TAG: ${IMAGE_TAG}"
+            bash bash-scripts/images/build-docker-images.sh
+      - run:
+          name: Docker-Compose Tests Local
+          command: |
+            set -x
+            export IMAGE_TAG=$(python3 -c "import re; print(re.sub('[^0-9a-zA-Z]+', '-', '${CIRCLE_BRANCH}').lower())")
+            echo "IMAGE_TAG: ${IMAGE_TAG}"
+            bash bash-scripts/testing/test-local-image-docker-compose-stack.sh
+      - run:
+          name: Push to ECR
+          command: |
+            set -x
+            export IMAGE_TAG=$(python3 -c "import re; print(re.sub('[^0-9a-zA-Z]+', '-', '${CIRCLE_BRANCH}').lower())")
+            echo "IMAGE_TAG: ${IMAGE_TAG}"
+            source docker/repo.sh
+            $(aws ecr get-login --no-include-email --region ${ECR_REGION})
+            docker tag ui ${ECR_ID}.dkr.ecr.${ECR_REGION}.amazonaws.com/${PROJECT_NAME}/ui:${IMAGE_TAG}
+            docker tag django ${ECR_ID}.dkr.ecr.${ECR_REGION}.amazonaws.com/${PROJECT_NAME}/django:${IMAGE_TAG}
+            docker tag api-gateway ${ECR_ID}.dkr.ecr.${ECR_REGION}.amazonaws.com/${PROJECT_NAME}/api-gateway:${IMAGE_TAG}
+            docker push ${ECR_ID}.dkr.ecr.${ECR_REGION}.amazonaws.com/${PROJECT_NAME}/ui:${IMAGE_TAG}
+            docker push ${ECR_ID}.dkr.ecr.${ECR_REGION}.amazonaws.com/${PROJECT_NAME}/django:${IMAGE_TAG}
+            docker push ${ECR_ID}.dkr.ecr.${ECR_REGION}.amazonaws.com/${PROJECT_NAME}/api-gateway:${IMAGE_TAG}
+
+  tagged_image_tests:
+    <<: *defaults
+    steps:
+      - checkout
+      - setup_remote_docker:
+          version: '20.10.2'
+      - run:
+          name: Docker-Compose Tests Tagged
+          command: |
+            set -x
+            export IMAGE_TAG=$(python3 -c "import re; print(re.sub('[^0-9a-zA-Z]+', '-', '${CIRCLE_BRANCH}').lower())")
+            echo "IMAGE_TAG: ${IMAGE_TAG}"
+            source docker/repo.sh
+            export ROOT_PATH=.
+            docker system prune -af --volumes
+            docker build -t stacktest -f docker/stacktest/Dockerfile .
+            bash bash-scripts/testing/test-tagged-image-docker-compose-stack.sh
+
+  prod_stack_legacy_deployment:
+    <<: *defaults
+    steps:
+      - checkout
+      - setup_remote_docker:
+          version: '20.10.2'
+      - run:
+          name: Build and Test Production EC2/Docker-Compose Stack
+          command: |
+            set -x
+            export ROOT_PATH=$PWD
+            source ${ROOT_PATH}/legacy/legacy_environment.sh
+            echo "SOURCE_PATH: ${SOURCE_PATH}"
+            if test -d ${SOURCE_PATH}; then
+              bash bash-scripts/legacy/deploy-docker-compose-ec2-rds-stack.sh
+              echo "-- Sleeping 300 seconds..."
+              sleep 300
+              docker build -t stacktest -f docker/stacktest/Dockerfile .
+              docker run --rm --name stacktester -e SERVICE="https://${PROJECT_NAME}.${DOMAIN}/api/v0.1" -e TESTERUSER_PASSWORD stacktest ./integration-tests.sh
+            else
+              echo "${SOURCE_PATH} does not exist! Exiting!"
+              exit 1
+            fi
+
+  validate_k8s_cluster:
+    <<: *defaults
+    steps:
+      - checkout
+      - run:
+          name: Validate Kubernetes Cluster
+          command: |
+            set -x
+            export ROOT_PATH=$PWD
+            source ${ROOT_PATH}/kubernetes/us-east-2/prod/environment.sh
+            source ${ROOT_PATH}/kubernetes/us-east-2/region_environment.sh
+            source ${ROOT_PATH}/kubernetes/k8s_environment.sh
+            echo "SOURCE_PATH: ${SOURCE_PATH}"
+            if test -d ${SOURCE_PATH}; then
+              bash bash-scripts/k8s-clusters/pull-kube-config.sh
+              bash bash-scripts/k8s-clusters/validate-cluster.sh
+            else
+              echo "${SOURCE_PATH} does not exist! Exiting!"
+              exit 1
+            fi
+
+  k8s_stack_tests:
+    <<: *defaults
+    steps:
+      - checkout
+      - setup_remote_docker:
+          version: '20.10.2'
+      - run:
+          name: Build and Test K8s Stack
+          command: |
+            set -x
+            export ROOT_PATH=$PWD
+            export SOURCE_PATH=${ROOT_PATH}/kubernetes/us-east-2/prod/
+            export IMAGE_TAG=$(python3 -c "import re; print(re.sub('[^0-9a-zA-Z]+', '-', '${CIRCLE_BRANCH}').lower())")
+            export STACK_NAME="ci-${CIRCLE_BUILD_NUM}-${IMAGE_TAG}"
+            echo "SOURCE_PATH: ${SOURCE_PATH}"
+            echo "IMAGE_TAG: ${IMAGE_TAG}"
+            echo "STACK_NAME: ${STACK_NAME}"
+            echo "-- Attempting to pull kubeconfig..."
+            bash bash-scripts/k8s-clusters/pull-kube-config.sh
+            echo "-- Deploying K8s app-stack into ${DEPLOYMENT_NAME}..."
+            bash bash-scripts/app-stacks/deploy-k8s-app-stack.sh
+            # this is inelegant, but avoids DNS cacheing problems in test script, among other things
+            echo "-- Sleeping 300 seconds..."
+            sleep 300
+            echo "-- Running API integration-tests against K8s app-stack..."
+            docker build -t stacktest -f docker/stacktest/Dockerfile .
+            docker run --rm -e SERVICE="https://${STACK_NAME}.sloanahrens.com/api/v0.1" -e TESTERUSER_PASSWORD stacktest ./integration-tests.sh
+            echo "-- Destroying app-stack..."
+            bash bash-scripts/app-stacks/destroy-k8s-app-stack.sh
+            echo "-- Kubernetes-stack integration tests succeeded."
+
+  prod_k8s_stack_deployment:
+    <<: *defaults
+    steps:
+      - checkout
+      - setup_remote_docker:
+          version: '20.10.2'
+      - run:
+          name: Build and Test Production RDS-backed K8s Stack
+          command: |
+            set -x
+            export ROOT_PATH=$PWD
+            export SOURCE_PATH=${ROOT_PATH}/kubernetes/us-east-2/prod/
+            export STACK_NAME=stellarbot-k8s
+            export IMAGE_TAG=master
+            export WORKER_REPLICAS=3
+            echo "SOURCE_PATH: ${SOURCE_PATH}"
+            echo "IMAGE_TAG: ${IMAGE_TAG}"
+            echo "STACK_NAME: ${STACK_NAME}"
+            echo "-- Attempting to pull kubeconfig..."
+            bash bash-scripts/k8s-clusters/pull-kube-config.sh
+            echo "-- Destroying existing ${STACK_NAME} app-stack in ${DEPLOYMENT_NAME}..."
+            bash bash-scripts/app-stacks/destroy-k8s-app-stack.sh
+            sleep 10
+            echo "-- Deploying K8s app-stack ${STACK_NAME} into ${DEPLOYMENT_NAME}..."
+            bash bash-scripts/app-stacks/deploy-k8s-app-stack.sh
+            echo "-- Sleeping 300 seconds..."
+            sleep 300
+            echo "-- Running API integration-tests against '${IMAGE_TAG}' app-stack..."
+            docker build -t stacktest -f docker/stacktest/Dockerfile .
+            docker run --rm -e SERVICE="https://${STACK_NAME}.sloanahrens.com/api/v0.1" -e TESTERUSER_PASSWORD stacktest ./integration-tests.sh
+            echo "-- Kubernetes-stack integration tests succeeded."
+
+workflows:
+  version: 2
+  build-and-deploy:
+    jobs:
+      - python_linting
+      - javascript_linting
+      - validate_k8s_cluster
+      - image_build_test_push
+      - tagged_image_tests:
+          requires:
+            - image_build_test_push
+      - prod_stack_legacy_deployment:
+          requires:
+            - tagged_image_tests
+          filters:
+            branches:
+              only:
+                - master
+      - k8s_stack_tests:
+          requires:
+            - tagged_image_tests
+            - validate_k8s_cluster
+      - prod_k8s_stack_deployment:
+          requires:
+            - k8s_stack_tests
+          filters:
+            branches:
+              only:
+                - master

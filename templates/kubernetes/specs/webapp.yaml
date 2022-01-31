@@ -1,0 +1,85 @@
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: webapp
+  labels:
+    stack: STACK_NAME
+    type: django-app
+    service: webapp
+spec:
+  clusterIP: None
+  selector:
+    type: django-app
+    service: webapp
+  ports:
+  - name: web
+    port: 8000
+    targetPort: 8000
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: webapp
+  labels:
+    stack: STACK_NAME
+spec:
+  serviceName: webapp
+  replicas: WEBAPP_REPLICAS
+  selector:
+    matchLabels:
+      type: django-app
+      service: webapp
+  template:
+    metadata:
+      labels:
+        type: django-app
+        service: webapp
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+      - name: webapp
+        image: ECR_ID.dkr.ecr.ECR_REGION.amazonaws.com/PROJECT_NAME/django:IMAGE_TAG
+        imagePullPolicy: Always
+        envFrom:
+        - configMapRef:
+            name: stack-config
+        command: ["/src/initialize-webapp.sh"]
+        # readinessProbe:
+        #   httpGet:
+        #     path: /health/database/
+        #     port: 8000
+        #   initialDelaySeconds: 20
+        #   timeoutSeconds: 1
+        #   periodSeconds: 10
+        # readinessProbe:
+        #   httpGet:
+        #     path: /health/celery/
+        #     port: 8000
+        #   initialDelaySeconds: 20
+        #   timeoutSeconds: 1
+        #   periodSeconds: 10
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: webapp
+  labels:
+    stack: STACK_NAME
+    type: webapp
+    service: webapp
+  annotations:
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+  - host: "STACK_NAME-admin.sloanahrens.com"
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: webapp
+            port:
+              number: 8000

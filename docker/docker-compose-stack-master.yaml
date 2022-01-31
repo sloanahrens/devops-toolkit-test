@@ -1,0 +1,93 @@
+version: '3.4'
+
+services:
+
+  api-gateway:
+    image: 421987441365.dkr.ecr.us-east-2.amazonaws.com/stellarbot/api-gateway:master
+    restart: unless-stopped
+    tty: true
+    container_name: api_gateway
+    ports:
+      - '9999:9999'
+
+  ui:
+    image: 421987441365.dkr.ecr.us-east-2.amazonaws.com/stellarbot/ui:master
+    restart: unless-stopped
+    tty: true
+    container_name: ui
+    ports:
+      - '80:80'
+
+  webapp:
+    image: 421987441365.dkr.ecr.us-east-2.amazonaws.com/stellarbot/django:master
+    restart: unless-stopped
+    tty: true
+    container_name: webapp
+    env_file:
+     - /home/ec2-user/stack-config.sh
+    ports:
+      - '8000:8000'
+    links:
+      - queue
+      - redis
+    command: /src/initialize-webapp.sh
+
+  worker1:
+    image: 421987441365.dkr.ecr.us-east-2.amazonaws.com/stellarbot/django:master
+    restart: unless-stopped
+    tty: true
+    container_name: worker1
+    env_file:
+     - /home/ec2-user/stack-config.sh
+    links:
+      - queue
+      - redis
+    command: bash -c 'export C_FORCE_ROOT=true && celery --app=stellarbot.celery worker -O fair -c 1 --loglevel=info'
+
+  worker2:
+    image: 421987441365.dkr.ecr.us-east-2.amazonaws.com/stellarbot/django:master
+    restart: unless-stopped
+    tty: true
+    container_name: worker2
+    env_file:
+     - /home/ec2-user/stack-config.sh
+    links:
+      - queue
+      - redis
+    command: bash -c 'export C_FORCE_ROOT=true && celery --app=stellarbot.celery worker -O fair -c 1 --loglevel=info'
+
+  worker3:
+    image: 421987441365.dkr.ecr.us-east-2.amazonaws.com/stellarbot/django:master
+    restart: unless-stopped
+    tty: true
+    container_name: worker3
+    env_file:
+     - /home/ec2-user/stack-config.sh
+    links:
+      - queue
+      - redis
+    command: bash -c 'export C_FORCE_ROOT=true && celery --app=stellarbot.celery worker -O fair -c 1 --loglevel=info'
+
+  beat:
+    image: 421987441365.dkr.ecr.us-east-2.amazonaws.com/stellarbot/django:master
+    restart: unless-stopped
+    tty: true
+    container_name: celery_beat
+    env_file:
+     - /home/ec2-user/stack-config.sh
+    links:
+      - queue
+      - redis
+    command: bash -c 'export C_FORCE_ROOT=true && sleep 20 && celery --app=stellarbot.celery beat --loglevel=info'
+
+  queue:
+    image: rabbitmq:alpine
+    container_name: rabbitmq
+    env_file:
+     - /home/ec2-user/stack-config.sh
+
+  redis:
+    image: redis:alpine
+    container_name: redis
+    env_file:
+     - /home/ec2-user/stack-config.sh

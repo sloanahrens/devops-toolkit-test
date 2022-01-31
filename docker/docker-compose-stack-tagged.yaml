@@ -1,0 +1,106 @@
+version: '3.4'
+
+services:
+
+  api_gateway_tagged:
+    image: ${ECR_ID}.dkr.ecr.${ECR_REGION}.amazonaws.com/${PROJECT_NAME}/api-gateway:${IMAGE_TAG}
+    restart: unless-stopped
+    tty: true
+    container_name: api_gateway
+    ports:
+      - "9999:9999"
+
+  ui_tagged:
+    image: ${ECR_ID}.dkr.ecr.${ECR_REGION}.amazonaws.com/${PROJECT_NAME}/ui:${IMAGE_TAG}
+    restart: unless-stopped
+    tty: true
+    container_name: ui
+    ports:
+      - "80:80"
+
+  webapp_tagged:
+    image: ${ECR_ID}.dkr.ecr.${ECR_REGION}.amazonaws.com/${PROJECT_NAME}/django:${IMAGE_TAG}
+    restart: unless-stopped
+    tty: true
+    container_name: webapp
+    env_file:
+     - ../container_environments/prod_stack_vars.env
+    ports:
+      - "8000:8000"
+    links:
+      - postgres_tagged
+      - rabbitmq_tagged
+      - redis_tagged
+    command: /src/initialize-webapp.sh
+
+  worker1_tagged:
+    image: ${ECR_ID}.dkr.ecr.${ECR_REGION}.amazonaws.com/${PROJECT_NAME}/django:${IMAGE_TAG}
+    restart: unless-stopped
+    tty: true
+    container_name: worker1
+    env_file:
+     - ../container_environments/prod_stack_vars.env
+    links:
+      - postgres_tagged
+      - rabbitmq_tagged
+      - redis_tagged
+    command: bash -c "export C_FORCE_ROOT=true && celery --app=${PROJECT_NAME}.celery worker -O fair -c 1 --loglevel=info"
+  
+  worker2_tagged:
+    image: ${ECR_ID}.dkr.ecr.${ECR_REGION}.amazonaws.com/${PROJECT_NAME}/django:${IMAGE_TAG}
+    restart: unless-stopped
+    tty: true
+    container_name: worker2
+    env_file:
+     - ../container_environments/prod_stack_vars.env
+    links:
+      - postgres_tagged
+      - rabbitmq_tagged
+      - redis_tagged
+    command: bash -c "export C_FORCE_ROOT=true && celery --app=${PROJECT_NAME}.celery worker -O fair -c 1 --loglevel=info"
+
+  worker3_tagged:
+    image: ${ECR_ID}.dkr.ecr.${ECR_REGION}.amazonaws.com/${PROJECT_NAME}/django:${IMAGE_TAG}
+    restart: unless-stopped
+    tty: true
+    container_name: worker3
+    env_file:
+     - ../container_environments/prod_stack_vars.env
+    links:
+      - postgres_tagged
+      - rabbitmq_tagged
+      - redis_tagged
+    command: bash -c "export C_FORCE_ROOT=true && celery --app=${PROJECT_NAME}.celery worker -O fair -c 1 --loglevel=info"
+
+  beat_tagged:
+    image: ${ECR_ID}.dkr.ecr.${ECR_REGION}.amazonaws.com/${PROJECT_NAME}/django:${IMAGE_TAG}
+    restart: unless-stopped
+    tty: true
+    container_name: celery_beat
+    env_file:
+     - ../container_environments/prod_stack_vars.env
+    links:
+      - postgres_tagged
+      - rabbitmq_tagged
+      - redis_tagged
+    command: bash -c "export C_FORCE_ROOT=true && sleep 20 && celery --app=${PROJECT_NAME}.celery beat --loglevel=info"
+
+  rabbitmq_tagged:
+    image: rabbitmq:alpine
+    container_name: rabbitmq
+    env_file:
+     - ../container_environments/prod_stack_vars.env
+
+  redis_tagged:
+    image: redis:alpine
+    container_name: redis
+    env_file:
+     - ../container_environments/prod_stack_vars.env
+
+  postgres_tagged:
+    image: postgres:alpine
+    restart: unless-stopped
+    tty: true
+    container_name: postgres
+    env_file:
+     - ../container_environments/prod_stack_vars.env

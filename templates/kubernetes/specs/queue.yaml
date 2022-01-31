@@ -1,0 +1,56 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rabbitmq-management
+  labels:
+    stack: STACK_NAME
+spec:
+  clusterIP: None
+  ports:
+  - port: 15672
+  selector:
+    type: queue
+    service: queue
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: queue
+  labels:
+    stack: STACK_NAME
+spec:
+  clusterIP: None
+  ports:
+  - port: 5672
+  selector:
+    type: queue
+    service: queue
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: queue
+  labels:
+    stack: STACK_NAME
+spec:
+  serviceName: queue
+  replicas: 1
+  selector:
+    matchLabels:
+      type: queue
+      service: queue
+  template:
+    metadata:
+      labels:
+        type: queue
+        service: queue
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+      - name: queue
+        image: rabbitmq:alpine
+        imagePullPolicy: IfNotPresent
+        envFrom:
+        - configMapRef:
+            name: stack-config

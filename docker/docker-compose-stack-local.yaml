@@ -1,0 +1,106 @@
+version: '3.4'
+
+services:
+
+  api-gateway:
+    image: api-gateway
+    restart: unless-stopped
+    tty: true
+    container_name: api_gateway
+    ports:
+      - "9999:9999"
+
+  ui:
+    image: ui
+    restart: unless-stopped
+    tty: true
+    container_name: ui
+    ports:
+      - "80:80"
+
+  webapp:
+    image: django
+    restart: unless-stopped
+    tty: true
+    container_name: webapp
+    env_file:
+     - ../container_environments/test_stack.env
+    ports:
+      - "8000:8000"
+    links:
+      - database
+      - queue
+      - redis
+    command: /src/initialize-webapp.sh
+
+  worker1:
+    image: django
+    restart: unless-stopped
+    tty: true
+    container_name: worker1
+    env_file:
+     - ../container_environments/test_stack.env
+    links:
+      - database
+      - queue
+      - redis
+    command: bash -c "export C_FORCE_ROOT=true && celery --app=stellarbot.celery worker -O fair -c 1 --loglevel=info"
+
+  worker2:
+    image: django
+    restart: unless-stopped
+    tty: true
+    container_name: worker2
+    env_file:
+     - ../container_environments/test_stack.env
+    links:
+      - database
+      - queue
+      - redis
+    command: bash -c "export C_FORCE_ROOT=true && celery --app=stellarbot.celery worker -O fair -c 1 --loglevel=info"
+
+  worker3:
+    image: django
+    restart: unless-stopped
+    tty: true
+    container_name: worker3
+    env_file:
+     - ../container_environments/test_stack.env
+    links:
+      - database
+      - queue
+      - redis
+    command: bash -c "export C_FORCE_ROOT=true && celery --app=stellarbot.celery worker -O fair -c 1 --loglevel=info"
+
+  beat:
+    image: django
+    restart: unless-stopped
+    tty: true
+    container_name: celery_beat
+    env_file:
+     - ../container_environments/test_stack.env
+    links:
+      - database
+      - queue
+      - redis
+    command: bash -c "export C_FORCE_ROOT=true && sleep 20 && celery --app=stellarbot.celery beat --loglevel=info"
+
+  queue:
+    image: rabbitmq:alpine
+    container_name: rabbitmq
+    env_file:
+     - ../container_environments/test_stack.env
+
+  redis:
+    image: redis:alpine
+    container_name: redis
+    env_file:
+     - ../container_environments/test_stack.env
+
+  database:
+    image: postgres:alpine
+    restart: unless-stopped
+    tty: true
+    container_name: postgres
+    env_file:
+     - ../container_environments/test_stack.env
