@@ -48,10 +48,10 @@ export VIEWERUSER_PASSWORD=${VIEWERUSER_PASSWORD-'foot-bezoar-craving'}
 export POSTGRES_PASSWORD=${POSTGRES_PASSWORD-'purse-scandal-seashore-tights'}
 export RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS-'foot-bezoar-craving-distrust'}
 
-export DEPLOY_REMOTE_STATE='false'
-export DESTROY_REMOTE_STATE='false'
+export DEPLOY_REMOTE_STATE='true'
+export DESTROY_REMOTE_STATE='true'
 
-export DEPLOY_KEY_PAIR='false'
-export DESTROY_KEY_PAIR='false'
+export DEPLOY_KEY_PAIR='true'
+export DESTROY_KEY_PAIR='true'
 
 export K8S_CLUSTER_NAME=${DEPLOYMENT_NAME}.k8s.local

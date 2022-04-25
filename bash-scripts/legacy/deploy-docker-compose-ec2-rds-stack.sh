@@ -11,7 +11,7 @@ echo "SOURCE_PATH: ${SOURCE_PATH}"
 
 validate_aws_config
 
-mkdir -p ${SOURCE_PATH}
+mkdir -p ${SOURCE_PATH}/infra
 
 echo "-----"
 echo "REGION: ${REGION}"
@@ -41,7 +41,7 @@ apply_legacy_templates
 # main infrastructure terraform deployment commands
 echo "-----"
 echo "Deploying VPC and cloud infrastructure with terraform from ${SOURCE_PATH}..."
-cd ${SOURCE_PATH}
+cd ${SOURCE_PATH}/infra
 terraform init
 terraform plan
 
@@ -57,13 +57,17 @@ obfuscate_legacy_templates
 
 #####
 # extract information from terraform
-DEPLOYMENT_INFO=$(terraform output -json)
+cd ${SOURCE_PATH}/infra
+DEPLOYMENT_INFO="$(terraform output -json)"
+
+# echo "${DEPLOYMENT_INFO}"
+
 echo "-----"
-echo "Stack Endpoint: $(echo ${DEPLOYMENT_INFO} | jq -r ".stack_endpoint.value")"
+echo "Stack Endpoint: $(echo "${DEPLOYMENT_INFO}" | jq -r ".stack_endpoint.value")"
 echo "-----"
-echo "Load Balancer: $(echo ${DEPLOYMENT_INFO} | jq -r ".elb_dns_name.value")"
+echo "Load Balancer: $(echo "${DEPLOYMENT_INFO}" | jq -r ".elb_dns_name.value")"
 echo "-----"
-echo "RDS Internal Endpoint: $(echo ${DEPLOYMENT_INFO} | jq -r ".rds_internal_endpoint.value")"
+echo "RDS Internal Endpoint: $(echo "${DEPLOYMENT_INFO}" | jq -r ".rds_internal_endpoint.value")"
 echo "-----"
 # echo "Web server accessible via SSH with (find INSTANCE_IP in the AWS console):"
 # echo "ssh -i ${PUBLIC_KEY_PATH} ec2-user@[INSTANCE_IP]"

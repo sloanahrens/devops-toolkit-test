@@ -48,13 +48,17 @@ function validate_source_path {
 }
 
 function source_cluster_env {
-    if [ ! -f "${SOURCE_PATH}/environment.sh" ]; then
-        echo "SOURCE_PATH: ${SOURCE_PATH}"
-        echo "*** Environment file ${SOURCE_PATH}/environment.sh does not exist!"
-        exit_with_error
-    else
+    echo "[devops-functions.source_cluster_env] SOURCE_PATH: ${SOURCE_PATH}"
+    if [ -f "${SOURCE_PATH}/environment.sh" ]; then
+        echo "*** Environment file ${SOURCE_PATH}/environment.sh found."
         source ${SOURCE_PATH}/environment.sh
+    fi
+    if [ -f "${ROOT_PATH}/kubernetes/${REGION}/region_environment.sh" ]; then
+        echo "*** Environment file ${ROOT_PATH}/kubernetes/${REGION}/region_environment.sh found."
         source ${ROOT_PATH}/kubernetes/${REGION}/region_environment.sh
+    fi
+    if [ -f "${ROOT_PATH}/kubernetes/k8s_environment.sh" ]; then
+        echo "*** Environment file ${ROOT_PATH}/kubernetes/k8s_environment.sh found."
         source ${ROOT_PATH}/kubernetes/k8s_environment.sh
     fi
 }
@@ -142,8 +146,8 @@ function deploy_ec2_key_pair {
             export AWS_DEFAULT_REGION=${REGION}
             aws ec2 create-key-pair --key-name ${AWS_KEY_NAME} | jq -r '.KeyMaterial' >${PRIVATE_KEY_PATH}
             chmod 600 ${PRIVATE_KEY_PATH}
-            # encrypt key so we can use it from public repo CI jobs
-            gpg --symmetric --batch --yes --passphrase ${KEY_ENCRYPTION_PASSPHRASE} ${PRIVATE_KEY_PATH}
+            # # encrypt key so we can use it from public repo CI jobs
+            # gpg --symmetric --batch --yes --passphrase ${KEY_ENCRYPTION_PASSPHRASE} ${PRIVATE_KEY_PATH}
         fi
         # create public key that can be checked in
         ssh-keygen -y -f ${PRIVATE_KEY_PATH} > ${PUBLIC_KEY_PATH}
@@ -289,7 +293,7 @@ function get_resources_from_legacy_deployment {
     if [ -d "${SOURCE_PATH}" ]; then
 
         # extract information from terraform
-        cd ${SOURCE_PATH}
+        cd ${SOURCE_PATH}/infra
         DEPLOYMENT_INFO=$(terraform output -json)
 
         export VPC_ID=$(echo ${DEPLOYMENT_INFO} | jq -r ".vpc_id.value")
@@ -350,7 +354,7 @@ function apply_legacy_templates {
       | sed -e "s@VIEWERUSERPASSWORD@${VIEWERUSER_PASSWORD}@g" \
       | sed -e "s@K8S_CLUSTER_NAME@${K8S_CLUSTER_NAME}@g" \
       | sed -e "s@TERRAFORM_BUCKET_NAME@${TERRAFORM_BUCKET_NAME}@g" \
-      > ${SOURCE_PATH}/infrastructure.tf
+      > ${SOURCE_PATH}/infra/infrastructure.tf
 
     # RDS setup
     cat ${TEMPLATES_PATH}/rds.tf \
@@ -362,14 +366,14 @@ function apply_legacy_templates {
       | sed -e "s@POSTGRES_DB@${POSTGRES_DB}@g" \
       | sed -e "s@POSTGRES_USER@${POSTGRES_USER}@g" \
       | sed -e "s@POSTGRES_PASSWORD@${POSTGRES_PASSWORD}@g" \
-      > ${SOURCE_PATH}/rds.tf
+      > ${SOURCE_PATH}/infra/rds.tf
 
     # reference to terraform remote state:
     cat ${ROOT_PATH}/templates/shared/remote_state.tf \
       | sed -e "s@REGION@${REGION}@g" \
       | sed -e "s@TERRAFORM_BUCKET_NAME@${TERRAFORM_BUCKET_NAME}@g" \
       | sed -e "s@TERRAFORM_DYNAMODB_TABLE_NAME@${TERRAFORM_DYNAMODB_TABLE_NAME}@g" \
-      > ${SOURCE_PATH}/remote_state.tf
+      > ${SOURCE_PATH}/infra/remote_state.tf
 }
 
 function obfuscate_legacy_templates {
@@ -383,7 +387,7 @@ function obfuscate_legacy_templates {
       | sed -e "s@POSTGRES_DB@${POSTGRES_DB}@g" \
       | sed -e "s@POSTGRES_USER@${POSTGRES_USER}@g" \
       | sed -e "s@POSTGRES_PASSWORD@****************@g" \
-      > ${SOURCE_PATH}/rds.tf
+      > ${SOURCE_PATH}/infra/rds.tf
 
     cat ${TEMPLATES_PATH}/infrastructure.tf \
       | sed -e "s@REGION@${REGION}@g" \
@@ -413,7 +417,7 @@ function obfuscate_legacy_templates {
       | sed -e "s@TESTERUSERPASSWORD@****************@g" \
       | sed -e "s@VIEWERUSERPASSWORD@****************@g" \
       | sed -e "s@K8S_CLUSTER_NAME@${K8S_CLUSTER_NAME}@g" \
-      > ${SOURCE_PATH}/infrastructure.tf
+      > ${SOURCE_PATH}/infra/infrastructure.tf
 }
 
 #####

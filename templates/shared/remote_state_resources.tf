@@ -19,15 +19,33 @@ resource "aws_dynamodb_table" "TERRAFORM_DYNAMODB_TABLE_NAME" {
   }
 }
 
-# bucket for terraform remote state
+# # bucket for terraform remote state
+# resource "aws_s3_bucket" "TERRAFORM_BUCKET_NAME" {
+#     bucket = "TERRAFORM_BUCKET_NAME"
+
+#     versioning {
+#       enabled = true
+#     }
+
+#     tags = {
+#       Name = "S3 Remote Terraform State Store for DEPLOYMENT_NAME"
+#     }
+# }
+
+
 resource "aws_s3_bucket" "TERRAFORM_BUCKET_NAME" {
     bucket = "TERRAFORM_BUCKET_NAME"
+}
 
-    versioning {
-      enabled = true
-    }
+resource "aws_s3_bucket_acl" "TERRAFORM_BUCKET_NAME_acl" {
+    bucket = aws_s3_bucket.TERRAFORM_BUCKET_NAME.id
+    acl    = "private"
+}
 
-    tags = {
-      Name = "S3 Remote Terraform State Store for DEPLOYMENT_NAME"
+resource "aws_s3_bucket_versioning" "TERRAFORM_BUCKET_NAME_versioning" {
+    bucket = aws_s3_bucket.TERRAFORM_BUCKET_NAME.id
+    
+    versioning_configuration {
+      status = "Enabled"
     }
 }

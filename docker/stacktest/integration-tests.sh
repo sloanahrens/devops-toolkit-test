@@ -59,8 +59,9 @@ function test_jwt_tokens {
     fi
     LENGTH=${#ACCESS_TOKEN}
     # echo "ACCESS_TOKEN length: ${LENGTH}"
-    if [[ ${LENGTH} != 205 ]]; then
-        echo -e "** Error: ACCESS_TOKEN length wrong! **\n - Expected 205\n - Got ${LENGTH}"
+    TARGET_LENGTH=228
+    if [[ ${LENGTH} != ${TARGET_LENGTH} ]]; then
+        echo -e "** Error: ACCESS_TOKEN length wrong! **\n - Expected ${TARGET_LENGTH}\n - Got ${LENGTH}"
         exit_with_error
     fi
 
@@ -71,8 +72,9 @@ function test_jwt_tokens {
     fi
     LENGTH=${#REFRESH_TOKEN}
     # echo "REFRESH_TOKEN length: ${LENGTH}"
-    if [[ ${LENGTH} != 207 ]]; then
-        echo -e "** Error: REFRESH_TOKEN length wrong! **\n - Expected 207\n - Got ${LENGTH}"
+    TARGET_LENGTH=229
+    if [[ ${LENGTH} != ${TARGET_LENGTH} ]]; then
+        echo -e "** Error: REFRESH_TOKEN length wrong! **\n - Expected ${TARGET_LENGTH}\n - Got ${LENGTH}"
         exit_with_error
     fi
     echo "API JWT token tests passed!"
