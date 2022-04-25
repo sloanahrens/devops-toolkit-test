@@ -286,40 +286,40 @@ function destroy_kops_state_bucket {
     fi
 }
 
-function get_resources_from_legacy_deployment {
+# function get_resources_from_legacy_deployment {
 
-    CLUSTER_PATH=${SOURCE_PATH}
-    source ${ROOT_PATH}/legacy/legacy_environment.sh
-    if [ -d "${SOURCE_PATH}" ]; then
+#     CLUSTER_PATH=${SOURCE_PATH}
+#     source ${ROOT_PATH}/legacy/legacy_environment.sh
+#     if [ -d "${SOURCE_PATH}" ]; then
 
-        # extract information from terraform
-        cd ${SOURCE_PATH}/infra
-        DEPLOYMENT_INFO=$(terraform output -json)
+#         # extract information from terraform
+#         cd ${TF_INFRA_PATH}
+#         DEPLOYMENT_INFO=$(terraform output -json)
 
-        export VPC_ID=$(echo ${DEPLOYMENT_INFO} | jq -r ".vpc_id.value")
-        export RDS_SG_ID=$(echo ${DEPLOYMENT_INFO} | jq -r ".rds_security_group_id.value")
-        export RDS_ENDPOINT=$(echo ${DEPLOYMENT_INFO} | jq -r ".rds_internal_endpoint.value")
+#         export VPC_ID=$(echo ${DEPLOYMENT_INFO} | jq -r ".vpc_id.value")
+#         export RDS_SG_ID=$(echo ${DEPLOYMENT_INFO} | jq -r ".rds_security_group_id.value")
+#         export RDS_ENDPOINT=$(echo ${DEPLOYMENT_INFO} | jq -r ".rds_internal_endpoint.value")
 
-        SUBNET_A=$(echo ${DEPLOYMENT_INFO} | jq -r ".public_subnet_a_id.value")
-        SUBNET_B=$(echo ${DEPLOYMENT_INFO} | jq -r ".public_subnet_b_id.value")
-        UTILITY_SUBNET_A=$(echo ${DEPLOYMENT_INFO} | jq -r ".utility_subnet_a_id.value")
-        UTILITY_SUBNET_B=$(echo ${DEPLOYMENT_INFO} | jq -r ".utility_subnet_b_id.value")
+#         SUBNET_A=$(echo ${DEPLOYMENT_INFO} | jq -r ".public_subnet_a_id.value")
+#         SUBNET_B=$(echo ${DEPLOYMENT_INFO} | jq -r ".public_subnet_b_id.value")
+#         UTILITY_SUBNET_A=$(echo ${DEPLOYMENT_INFO} | jq -r ".utility_subnet_a_id.value")
+#         UTILITY_SUBNET_B=$(echo ${DEPLOYMENT_INFO} | jq -r ".utility_subnet_b_id.value")
 
-        export SUBNET_IDS="${SUBNET_A},${SUBNET_B}"
-        export UTILITY_SUBNET_IDS="${UTILITY_SUBNET_A},${UTILITY_SUBNET_B}"
+#         export SUBNET_IDS="${SUBNET_A},${SUBNET_B}"
+#         export UTILITY_SUBNET_IDS="${UTILITY_SUBNET_A},${UTILITY_SUBNET_B}"
         
-        echo "VPC_ID=${VPC_ID}"
-        echo "SUBNET_IDS=${SUBNET_IDS}"
-        echo "UTILITY_SUBNET_IDS=${UTILITY_SUBNET_IDS}"
-        echo "RDS_SG_ID=${RDS_SG_ID}"
-        echo "RDS_ENDPOINT=${RDS_ENDPOINT}"
-    else
-        echo "Legacy deployment path '${SOURCE_PATH}' does not exist. Exiting."
-        exit_with_error
-    fi
-    export SOURCE_PATH=${CLUSTER_PATH}
-    cd ${SOURCE_PATH}
-}
+#         echo "VPC_ID=${VPC_ID}"
+#         echo "SUBNET_IDS=${SUBNET_IDS}"
+#         echo "UTILITY_SUBNET_IDS=${UTILITY_SUBNET_IDS}"
+#         echo "RDS_SG_ID=${RDS_SG_ID}"
+#         echo "RDS_ENDPOINT=${RDS_ENDPOINT}"
+#     else
+#         echo "Legacy deployment path '${SOURCE_PATH}' does not exist. Exiting."
+#         exit_with_error
+#     fi
+#     export SOURCE_PATH=${CLUSTER_PATH}
+#     cd ${SOURCE_PATH}
+# }
 
 function apply_legacy_templates {
 
@@ -354,7 +354,7 @@ function apply_legacy_templates {
       | sed -e "s@VIEWERUSERPASSWORD@${VIEWERUSER_PASSWORD}@g" \
       | sed -e "s@K8S_CLUSTER_NAME@${K8S_CLUSTER_NAME}@g" \
       | sed -e "s@TERRAFORM_BUCKET_NAME@${TERRAFORM_BUCKET_NAME}@g" \
-      > ${SOURCE_PATH}/infra/infrastructure.tf
+      > ${TF_INFRA_PATH}/infrastructure.tf
 
     # RDS setup
     cat ${TEMPLATES_PATH}/rds.tf \
@@ -366,14 +366,14 @@ function apply_legacy_templates {
       | sed -e "s@POSTGRES_DB@${POSTGRES_DB}@g" \
       | sed -e "s@POSTGRES_USER@${POSTGRES_USER}@g" \
       | sed -e "s@POSTGRES_PASSWORD@${POSTGRES_PASSWORD}@g" \
-      > ${SOURCE_PATH}/infra/rds.tf
+      > ${TF_INFRA_PATH}/rds.tf
 
     # reference to terraform remote state:
     cat ${ROOT_PATH}/templates/shared/remote_state.tf \
       | sed -e "s@REGION@${REGION}@g" \
       | sed -e "s@TERRAFORM_BUCKET_NAME@${TERRAFORM_BUCKET_NAME}@g" \
       | sed -e "s@TERRAFORM_DYNAMODB_TABLE_NAME@${TERRAFORM_DYNAMODB_TABLE_NAME}@g" \
-      > ${SOURCE_PATH}/infra/remote_state.tf
+      > ${TF_INFRA_PATH}/remote_state.tf
 }
 
 function obfuscate_legacy_templates {
@@ -387,7 +387,7 @@ function obfuscate_legacy_templates {
       | sed -e "s@POSTGRES_DB@${POSTGRES_DB}@g" \
       | sed -e "s@POSTGRES_USER@${POSTGRES_USER}@g" \
       | sed -e "s@POSTGRES_PASSWORD@****************@g" \
-      > ${SOURCE_PATH}/infra/rds.tf
+      > ${TF_INFRA_PATH}/rds.tf
 
     cat ${TEMPLATES_PATH}/infrastructure.tf \
       | sed -e "s@REGION@${REGION}@g" \
@@ -417,7 +417,7 @@ function obfuscate_legacy_templates {
       | sed -e "s@TESTERUSERPASSWORD@****************@g" \
       | sed -e "s@VIEWERUSERPASSWORD@****************@g" \
       | sed -e "s@K8S_CLUSTER_NAME@${K8S_CLUSTER_NAME}@g" \
-      > ${SOURCE_PATH}/infra/infrastructure.tf
+      > ${TF_INFRA_PATH}/infrastructure.tf
 }
 
 #####

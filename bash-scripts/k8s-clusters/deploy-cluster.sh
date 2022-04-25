@@ -9,7 +9,7 @@ set -e
 
 function create_kops_cluster {
 
-    cd ${SOURCE_PATH}/cluster
+    cd ${TF_INFRA_PATH}
 
     echo "Creating ${CLUSTER_NAME} in ${REGION} with kops..."
 
@@ -45,7 +45,7 @@ function run_cluster_terraform {
     #   | sed -e "s@DEPLOYMENT_NAME@${DEPLOYMENT_NAME}@g" \
     #   | sed -e "s@RDS_SG_ID@${RDS_SG_ID}@g" \
     #   | sed -e "s@POSTGRES_PORT@${POSTGRES_PORT}@g" \
-    #   > ${SOURCE_PATH}/cluster/rds_sg_rule.tf
+    #   > ${TF_INFRA_PATH}/rds_sg_rule.tf
 
     # reference to terraform remote state:
     cat ${ROOT_PATH}/templates/shared/remote_state.tf \
@@ -53,18 +53,18 @@ function run_cluster_terraform {
       | sed -e "s@TERRAFORM_DYNAMODB_TABLE_NAME@${TERRAFORM_DYNAMODB_TABLE_NAME}@g" \
       | sed -e "s@TERRAFORM_BUCKET_NAME@${TERRAFORM_BUCKET_NAME}@g" \
       | sed -e "s@REGION@${REGION}@g" \
-      > ${SOURCE_PATH}/cluster/remote_state.tf
+      > ${TF_INFRA_PATH}/remote_state.tf
 
     # need to add some things to k8s node IAM policy:
     cat ${TEMPLATES_PATH}/node_iam_policy.txt \
       | sed -e "s@R53_HOSTED_ZONE@${R53_HOSTED_ZONE}@g" \
       | sed -e "s@KOPS_BUCKET_NAME@${KOPS_BUCKET_NAME}@g" \
       | sed -e "s@CLUSTER_NAME@${CLUSTER_NAME}@g" \
-      > ${SOURCE_PATH}/cluster/data/aws_iam_role_policy_nodes.${CLUSTER_NAME}_policy
+      > ${TF_INFRA_PATH}/data/aws_iam_role_policy_nodes.${CLUSTER_NAME}_policy
 
     echo "Running cluster terraform code..."
 
-    cd ${SOURCE_PATH}/cluster
+    cd ${TF_INFRA_PATH}
 
     terraform init
 
@@ -79,7 +79,7 @@ function update_cluster {
 
     echo "Updating cluster..."
 
-    cd ${SOURCE_PATH}/cluster
+    cd ${TF_INFRA_PATH}
 
     kops update cluster ${CLUSTER_NAME} --state s3://${KOPS_BUCKET_NAME} --target=terraform --out=.
 
@@ -96,7 +96,7 @@ function update_cluster {
     # kops export kubecfg --name ${CLUSTER_NAME} --state s3://${KOPS_BUCKET_NAME} --admin
 
     # push kubeconfig to private s3 bucket
-    aws s3 cp ${SOURCE_PATH}/cluster/kubecfg.yaml s3://${KOPS_BUCKET_NAME}/kubecfg.yaml
+    aws s3 cp ${TF_INFRA_PATH}/kubecfg.yaml s3://${KOPS_BUCKET_NAME}/kubecfg.yaml
 }
 
 function wait_for_cluster_health {
@@ -112,13 +112,13 @@ function setup_nginx_ingress_plugin {
     # apply template
     cat ${TEMPLATES_PATH}/specs/nginx-ingress-load-balancer.yaml \
       | sed -e  "s@SSL_CERT_ARN@${SSL_CERT_ARN}@g" \
-      > ${SOURCE_PATH}/specs/nginx-ingress-load-balancer.yaml
+      > ${SPECS_PATH}/nginx-ingress-load-balancer.yaml
 
     # create Nginx Ingress controller:
     kubectl apply -f ${ROOT_PATH}/kubernetes/specs/nginx-ingress-controller.yaml
 
     # create nginx (region-specific) load-balancer
-    kubectl apply -f ${SOURCE_PATH}/specs/nginx-ingress-load-balancer.yaml
+    kubectl apply -f ${SPECS_PATH}/nginx-ingress-load-balancer.yaml
 }
 
 function setup_external_dns_plugin {
@@ -129,9 +129,9 @@ function setup_external_dns_plugin {
     cat ${TEMPLATES_PATH}/specs/external-dns.yaml \
       | sed -e  "s@PROJECT_NAME@${PROJECT_NAME}@g" \
       | sed -e  "s@DOMAIN@${DOMAIN}@g" \
-      > ${SOURCE_PATH}/specs/external-dns.yaml
+      > ${SPECS_PATH}/external-dns.yaml
 
-    kubectl apply -f ${SOURCE_PATH}/specs/external-dns.yaml
+    kubectl apply -f ${SPECS_PATH}/external-dns.yaml
 }
 
 # # function setup_autoscaler {
@@ -159,14 +159,14 @@ echo "Running setup and tests..."
 validate_aws_config
 validate_source_path
 
-mkdir -p ${SOURCE_PATH}/cluster
-mkdir -p ${SOURCE_PATH}/specs
-
-# get infrastructure ids for kops and rds-rule template
-get_resources_from_legacy_deployment
+# # get infrastructure ids for kops and rds-rule template
+# get_resources_from_legacy_deployment
 
 source_cluster_env
 show_cluster_env
+
+mkdir -p ${TF_INFRA_PATH}
+mkdir -p ${SPECS_PATH}
 
 if [ "${DEPLOY_KOPS_BUCKET}" = "true" ]; then
     deploy_kops_bucket
@@ -179,7 +179,7 @@ fi
 if [ "${DEPLOY_KEY_PAIR}" = "true" ]; then
     deploy_ec2_key_pair
 fi
-cp -f ${PUBLIC_KEY_PATH} ${SOURCE_PATH}/cluster/
+cp -f ${PUBLIC_KEY_PATH} ${TF_INFRA_PATH}/
 
 # echo "EXITING"
 # exit 1

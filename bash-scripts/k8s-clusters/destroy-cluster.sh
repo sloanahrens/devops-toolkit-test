@@ -13,10 +13,10 @@ if [ -f "${KUBECONFIG}" ]; then
     kubectl delete ns ingress-nginx --ignore-not-found=true
 fi
 
-if [ -d "${SOURCE_PATH}/cluster" ]; then
+if [ -d "${TF_INFRA_PATH}" ]; then
     echo "${SOURCE_PATH}/cluster found. Deleting cluster resources..."
 
-    cd ${SOURCE_PATH}/cluster
+    cd ${TF_INFRA_PATH}
     terraform init
     time terraform destroy --auto-approve
 
@@ -25,8 +25,8 @@ if [ -d "${SOURCE_PATH}/cluster" ]; then
     delete_kube_config
 
     echo "Removing cluster files..."
-    rm -rf ${SOURCE_PATH}/specs
-    rm -rf ${SOURCE_PATH}/cluster
+    rm -rf ${SPECS_PATH}
+    rm -rf ${TF_INFRA_PATH}
 else
     echo "Cluster terraform path '${SOURCE_PATH}/cluster' does not exist. So let's not delete it. ;)"
 fi

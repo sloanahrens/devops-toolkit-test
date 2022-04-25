@@ -31,7 +31,6 @@ export DEPLOYMENT_NAME=${PROJECT_NAME}-k8s-${DEPLOYMENT_TYPE}-${REGION}
 
 export CLUSTER_NAME=${DEPLOYMENT_NAME}.k8s.local
 export KOPS_BUCKET_NAME=kops-state-${DEPLOYMENT_NAME}
-export KUBECONFIG=${SOURCE_PATH}/cluster/kubecfg.yaml
 
 export TERRAFORM_BUCKET_NAME=tf-state-${DEPLOYMENT_NAME}
 export TERRAFORM_DYNAMODB_TABLE_NAME=tf-state-${DEPLOYMENT_NAME}
@@ -39,6 +38,12 @@ export TERRAFORM_DYNAMODB_TABLE_NAME=tf-state-${DEPLOYMENT_NAME}
 export ROOT_PATH=${ROOT_PATH-$PWD}
 
 export SOURCE_PATH=${ROOT_PATH}/kubernetes/${REGION}/${DEPLOYMENT_TYPE}
+
+export TF_INFRA_PATH=${SOURCE_PATH}/infra
+export SPECS_PATH=${SOURCE_PATH}/specs
+
+export KUBECONFIG=${TF_INFRA_PATH}/kubecfg.yaml
+
 export TEMPLATES_PATH=${ROOT_PATH}/templates/kubernetes
 
 export AWS_KEY_NAME=${DEPLOYMENT_NAME}
@@ -46,13 +51,13 @@ export PRIVATE_KEY_PATH=${ROOT_PATH}/ssh_keys/${AWS_KEY_NAME}.pem
 export PUBLIC_KEY_PATH=${ROOT_PATH}/ssh_keys/${AWS_KEY_NAME}.pub
 
 export DEPLOY_KOPS_BUCKET='true'
-export DESTROY_KOPS_BUCKET='true'
+export DESTROY_KOPS_BUCKET='false'
 
 export DEPLOY_REMOTE_STATE='true'
-export DESTROY_REMOTE_STATE='true'
+export DESTROY_REMOTE_STATE='false'
 
 export DEPLOY_KEY_PAIR='true'
-export DESTROY_KEY_PAIR='true'
+export DESTROY_KEY_PAIR='false'
 
 export LEGACY_DEPLOYMENT_NAME=${PROJECT_NAME}-legacy-${DEPLOYMENT_TYPE}-${REGION}
 
