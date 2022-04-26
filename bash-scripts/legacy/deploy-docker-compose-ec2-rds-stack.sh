@@ -11,7 +11,7 @@ echo "SOURCE_PATH: ${SOURCE_PATH}"
 
 validate_aws_config
 
-mkdir -p ${SOURCE_PATH}/infra
+mkdir -p ${TF_INFRA_PATH}
 
 echo "-----"
 echo "REGION: ${REGION}"
@@ -41,7 +41,7 @@ apply_legacy_templates
 # main infrastructure terraform deployment commands
 echo "-----"
 echo "Deploying VPC and cloud infrastructure with terraform from ${SOURCE_PATH}..."
-cd ${SOURCE_PATH}/infra
+cd ${TF_INFRA_PATH}
 terraform init
 terraform plan
 
@@ -57,7 +57,7 @@ obfuscate_legacy_templates
 
 #####
 # extract information from terraform
-cd ${SOURCE_PATH}/infra
+cd ${TF_INFRA_PATH}
 DEPLOYMENT_INFO="$(terraform output -json)"
 
 # echo "${DEPLOYMENT_INFO}"
@@ -74,5 +74,5 @@ echo "-----"
 # echo "-----"
 echo "Deployment finished."
 echo "-----"
-get_resources_from_legacy_deployment
+# get_resources_from_legacy_deployment
 echo "-----"

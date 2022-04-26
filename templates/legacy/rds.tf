@@ -6,7 +6,7 @@ resource "aws_db_instance" "DEPLOYMENT_NAME-postgres-primary" {
    engine                    = "postgres"
    engine_version            = "POSTGRES_VERSION"
    instance_class            = "RDS_INSTANCE_TYPE"
-   name                      = "POSTGRES_DB"
+   db_name                   = "POSTGRES_DB"
    username                  = "POSTGRES_USER"
    password                  = "POSTGRES_PASSWORD"
    port                      = POSTGRES_PORT

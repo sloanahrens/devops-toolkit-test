@@ -8,24 +8,25 @@ source ${ROOT_PATH}/bash-scripts/devops-functions.sh
 
 source ${ROOT_PATH}/legacy/legacy_environment.sh
 
-if [ -d "${SOURCE_PATH}" ]; then
-    echo "${SOURCE_PATH} found. Deleting deployment..."
+if [ -d "${TF_INFRA_PATH}" ]; then
+    echo "${TF_INFRA_PATH} found. Deleting deployment..."
 
-    if [ -d "${SOURCE_PATH}/infra" ]; then
+    if [ -d "${TF_INFRA_PATH}" ]; then
 
         # terraform won't destroy if we have incorrect (obfuscated) parameters
         apply_legacy_templates
 
-        cd ${SOURCE_PATH}/infra
+        cd ${TF_INFRA_PATH}
         terraform init
         time terraform destroy --auto-approve
     else
-        echo "Deployment terraform path '${SOURCE_PATH}/infra' does not exist, no infrastructure to delete. ;)"
+        echo "Deployment terraform path '${TF_INFRA_PATH}' does not exist, no infrastructure to delete. ;)"
     fi
 
     echo "Removing deployment files..."
-    cd ${SOURCE_PATH}
-    rm -rf ${SOURCE_PATH}/infra
+    cd ${TF_INFRA_PATH}
+    cd ..
+    rm -rf ${TF_INFRA_PATH}
 
     if [ "${DESTROY_KEY_PAIR}" = "true" ]; then
         destroy_ec2_key_pair
@@ -34,5 +35,5 @@ if [ -d "${SOURCE_PATH}" ]; then
         destroy_remote_state_resources
     fi
 else
-    echo "Deployment terraform path '${SOURCE_PATH}' does not exist. So let's not delete it. ;)"
+    echo "Deployment terraform path '${TF_INFRA_PATH}' does not exist. So let's not delete it. ;)"
 fi
