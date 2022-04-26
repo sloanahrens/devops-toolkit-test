@@ -50,13 +50,13 @@ export AWS_KEY_NAME=${DEPLOYMENT_NAME}
 export PRIVATE_KEY_PATH=${ROOT_PATH}/ssh_keys/${AWS_KEY_NAME}.pem
 export PUBLIC_KEY_PATH=${ROOT_PATH}/ssh_keys/${AWS_KEY_NAME}.pub
 
-export DEPLOY_KOPS_BUCKET='true'
+export DEPLOY_KOPS_BUCKET='false'
 export DESTROY_KOPS_BUCKET='false'
 
-export DEPLOY_REMOTE_STATE='true'
+export DEPLOY_REMOTE_STATE='false'
 export DESTROY_REMOTE_STATE='false'
 
-export DEPLOY_KEY_PAIR='true'
+export DEPLOY_KEY_PAIR='false'
 export DESTROY_KEY_PAIR='false'
 
 export LEGACY_DEPLOYMENT_NAME=${PROJECT_NAME}-legacy-${DEPLOYMENT_TYPE}-${REGION}
