@@ -48,7 +48,7 @@ terraform plan
 # echo "EXITING"
 # exit 1
 
-sleep_one_minute
+# sleep_one_minute
 time terraform apply --auto-approve
 #####
 
@@ -69,9 +69,6 @@ echo "Load Balancer: $(echo "${DEPLOYMENT_INFO}" | jq -r ".elb_dns_name.value")"
 echo "-----"
 echo "RDS Internal Endpoint: $(echo "${DEPLOYMENT_INFO}" | jq -r ".rds_internal_endpoint.value")"
 echo "-----"
-# echo "Web server accessible via SSH with (find INSTANCE_IP in the AWS console):"
-# echo "ssh -i ${PUBLIC_KEY_PATH} ec2-user@[INSTANCE_IP]"
-# echo "-----"
 echo "Deployment finished."
 echo "-----"
 # get_resources_from_legacy_deployment

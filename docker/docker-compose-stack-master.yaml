@@ -32,6 +32,30 @@ services:
       - redis
     command: /src/initialize-webapp.sh
 
+  beat:
+    image: 421987441365.dkr.ecr.us-east-2.amazonaws.com/stellarbot/django:master
+    restart: unless-stopped
+    tty: true
+    container_name: celery_beat
+    env_file:
+     - /home/ec2-user/stack-config.sh
+    links:
+      - queue
+      - redis
+    command: bash -c 'export C_FORCE_ROOT=true && sleep 20 && celery --app=stellarbot.celery beat --loglevel=info'
+
+  queue:
+    image: rabbitmq:alpine
+    container_name: rabbitmq
+    env_file:
+     - /home/ec2-user/stack-config.sh
+
+  redis:
+    image: redis:alpine
+    container_name: redis
+    env_file:
+     - /home/ec2-user/stack-config.sh
+
   worker1:
     image: 421987441365.dkr.ecr.us-east-2.amazonaws.com/stellarbot/django:master
     restart: unless-stopped
@@ -68,26 +92,26 @@ services:
       - redis
     command: bash -c 'export C_FORCE_ROOT=true && celery --app=stellarbot.celery worker -O fair -c 1 --loglevel=info'
 
-  beat:
+  worker4:
     image: 421987441365.dkr.ecr.us-east-2.amazonaws.com/stellarbot/django:master
     restart: unless-stopped
     tty: true
-    container_name: celery_beat
+    container_name: worker4
     env_file:
      - /home/ec2-user/stack-config.sh
     links:
       - queue
       - redis
-    command: bash -c 'export C_FORCE_ROOT=true && sleep 20 && celery --app=stellarbot.celery beat --loglevel=info'
+    command: bash -c 'export C_FORCE_ROOT=true && celery --app=stellarbot.celery worker -O fair -c 1 --loglevel=info'
 
-  queue:
-    image: rabbitmq:alpine
-    container_name: rabbitmq
+  worker5:
+    image: 421987441365.dkr.ecr.us-east-2.amazonaws.com/stellarbot/django:master
+    restart: unless-stopped
+    tty: true
+    container_name: worker5
     env_file:
      - /home/ec2-user/stack-config.sh
-
-  redis:
-    image: redis:alpine
-    container_name: redis
-    env_file:
-     - /home/ec2-user/stack-config.sh
+    links:
+      - queue
+      - redis
+    command: bash -c 'export C_FORCE_ROOT=true && celery --app=stellarbot.celery worker -O fair -c 1 --loglevel=info'

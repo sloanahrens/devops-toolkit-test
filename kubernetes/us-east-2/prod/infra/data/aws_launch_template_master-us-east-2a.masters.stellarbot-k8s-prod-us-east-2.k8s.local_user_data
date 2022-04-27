@@ -277,7 +277,7 @@ __EOF_IG_SPEC
 
 cat > conf/kube_env.yaml << '__EOF_KUBE_ENV'
 ApiserverAdditionalIPs:
-- api-stellarbot-k8s-prod-u-a2u18r-62325849.us-east-2.elb.amazonaws.com
+- api-stellarbot-k8s-prod-u-a2u18r-234883421.us-east-2.elb.amazonaws.com
 Assets:
   amd64:
   - 78be617b1d5974b21d533588fcd952b05ef7d8d92b1880fc44b4c0c0457b43db@https://storage.googleapis.com/kubernetes-release/release/v1.20.11/bin/linux/amd64/kubelet

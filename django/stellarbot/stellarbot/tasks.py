@@ -447,7 +447,7 @@ def random_asset_tuplet_scan(chain=False):
                                     } for tx in reversed(right_txs)]
                                 }, indent=2)
                             )
-                            if max_xlm_diff > 0:
+                            if max_xlm_diff > 1:  # small amounts cause clutter
                                 max_path.save()
                                 max_path.asset_set.set(asset_list)
                                 max_path.save()

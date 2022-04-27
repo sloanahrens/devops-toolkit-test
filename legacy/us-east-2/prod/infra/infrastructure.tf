@@ -136,7 +136,7 @@ resource "aws_launch_configuration" "stellarbot-legacy-prod-us-east-2_web_lc" {
   name_prefix = "******_"
 
   image_id = data.aws_ami.amazon-linux-2.id
-  instance_type = "t3.small"
+  instance_type = "t3.medium"
   key_name = "stellarbot-legacy-prod-us-east-2"
 
   security_groups = [ aws_security_group.stellarbot-legacy-prod-us-east-2_web_sg.id ]

@@ -136,7 +136,7 @@ resource "aws_launch_configuration" "DEPLOYMENT_NAME_web_lc" {
   name_prefix = "RANDOMSTR_"
 
   image_id = data.aws_ami.amazon-linux-2.id
-  instance_type = "t3.small"
+  instance_type = "t3.medium"
   key_name = "AWS_KEY_NAME"
 
   security_groups = [ aws_security_group.DEPLOYMENT_NAME_web_sg.id ]

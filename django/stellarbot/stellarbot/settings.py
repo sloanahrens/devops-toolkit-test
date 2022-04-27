@@ -268,9 +268,5 @@ ASSET_TUPLE_KEEP_DAYS=90
 
 VIEWERUSERS = [
     'sloan',
-    'sarah',
     'dallas',
-    'james',
-    'daniel',
-    'jeremiah'
 ]
