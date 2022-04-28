@@ -27,9 +27,10 @@ function show_cluster_env {
     echo "NODE_SIZE: ${NODE_SIZE}"
     echo "MASTER_COUNT: ${MASTER_COUNT}"
     echo "NODE_COUNT: ${NODE_COUNT}"
-    echo "SOURCE_PATH: ${SOURCE_PATH}"
-    echo "ROOT_PATH: ${ROOT_PATH}"
     echo "PROJECT_NAME: ${PROJECT_NAME}"
+    echo "ROOT_PATH: ${ROOT_PATH}"
+    echo "SOURCE_PATH: ${SOURCE_PATH}"
+    echo "TF_INFRA_PATH: ${TF_INFRA_PATH}"
     echo "----------"
 }
 

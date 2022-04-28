@@ -28,7 +28,7 @@ if [ -d "${TF_INFRA_PATH}" ]; then
     rm -rf ${SPECS_PATH}
     rm -rf ${TF_INFRA_PATH}
 else
-    echo "Cluster terraform path '${SOURCE_PATH}/cluster' does not exist. So let's not delete it. ;)"
+    echo "Cluster terraform path '${TF_INFRA_PATH}' does not exist. So let's not delete it. ;)"
 fi
 
 if [ "${DESTROY_KEY_PAIR}" = "true" ]; then
@@ -41,4 +41,4 @@ if [ "${DESTROY_KOPS_BUCKET}" = "true" ]; then
      destroy_kops_state_bucket
 fi
 
-echo "Cluster destroyed at SOURCE_PATH: ${SOURCE_PATH}."
+echo "Cluster destroyed at TF_INFRA_PATH: ${TF_INFRA_PATH}."
