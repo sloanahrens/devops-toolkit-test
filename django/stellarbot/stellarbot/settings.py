@@ -26,6 +26,7 @@ SECRET_KEY = '+*ll0!%&$(uco$wl4d@7esvw123k@1cs^psp!@xvlle+88c@fv'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
+# SECURITY WARNING: lock this down if possible
 ALLOWED_HOSTS = ['*']
 
 
@@ -182,7 +183,7 @@ SIMPLE_JWT = {
 }
 
 # # TODO: does this matter?
-# CSRF_TRUSTED_ORIGINS = ['https://*.sloanahrens.com']
+# CSRF_TRUSTED_ORIGINS = ['https://*.the-evolutionist.com']
 
 #####
 # Celery settings
@@ -268,5 +269,4 @@ ASSET_TUPLE_KEEP_DAYS=90
 
 VIEWERUSERS = [
     'sloan',
-    'dallas',
 ]

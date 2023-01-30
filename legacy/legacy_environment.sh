@@ -7,9 +7,10 @@ export REGION=us-east-2
 export DEPLOYMENT_TYPE=prod
 export PROJECT_NAME=stellarbot
 
-export DOMAIN=sloanahrens.com
-export R53_HOSTED_ZONE=Z1CDZE44WDSMXZ
-export SSL_CERT_ARN='arn:aws:acm:us-east-2:421987441365:certificate/a49dc1cf-281f-4abf-a2ca-d79379e2f41b'
+export DOMAIN=the-evolutionist.com
+export R53_HOSTED_ZONE=Z1F8U0P3JLBR43
+export SSL_CERT_ARN="arn:aws:acm:us-east-2:421987441365:certificate/5cfdb27e-0aa7-4ced-813b-7a7478d366ee"
+
 export RDS_INSTANCE_TYPE=db.t3.small
 
 export DEPLOYMENT_NAME=${PROJECT_NAME}-legacy-${DEPLOYMENT_TYPE}-${REGION}
@@ -55,5 +56,3 @@ export DESTROY_REMOTE_STATE='true'
 
 export DEPLOY_KEY_PAIR='true'
 export DESTROY_KEY_PAIR='true'
-
-# export K8S_CLUSTER_NAME=${DEPLOYMENT_NAME}.k8s.local

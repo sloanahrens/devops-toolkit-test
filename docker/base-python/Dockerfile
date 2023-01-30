@@ -10,4 +10,4 @@ COPY ./django/requirements.txt /src/requirements.txt
 
 RUN pip install --upgrade pip
 
-RUN pip --no-cache-dir install --progress-bar pretty -r requirements.txt
+RUN pip install -r requirements.txt

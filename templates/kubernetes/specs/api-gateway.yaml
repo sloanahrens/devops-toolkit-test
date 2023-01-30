@@ -54,7 +54,7 @@ metadata:
     nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
   rules:
-  - host: "STACK_NAME.sloanahrens.com"
+  - host: "STACK_NAME.the-evolutionist.com"
     http:
       paths:
       - path: /

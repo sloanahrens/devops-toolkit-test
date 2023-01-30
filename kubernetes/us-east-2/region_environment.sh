@@ -6,8 +6,8 @@
 
 export REGION=us-east-2
 
-export R53_HOSTED_ZONE=Z1CDZE44WDSMXZ
-export SSL_CERT_ARN="arn:aws:acm:us-east-2:421987441365:certificate/a49dc1cf-281f-4abf-a2ca-d79379e2f41b"
+export R53_HOSTED_ZONE=Z1F8U0P3JLBR43
+export SSL_CERT_ARN="arn:aws:acm:us-east-2:421987441365:certificate/5cfdb27e-0aa7-4ced-813b-7a7478d366ee"
 
 export MASTER_ZONES=us-east-2a
 export NODE_ZONES=us-east-2a,us-east-2b

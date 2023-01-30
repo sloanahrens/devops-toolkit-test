@@ -4,7 +4,7 @@
 #####
 # PROJECT_NAME, DEPLOYMENT_TYPE and REGION need to be set before this script runs.
 
-export DOMAIN=sloanahrens.com
+export DOMAIN=the-evolutionist.com
 
 export POSTGRES_HOST=database
 export POSTGRES_PORT=5432

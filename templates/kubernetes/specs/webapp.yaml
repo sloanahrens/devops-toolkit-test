@@ -73,7 +73,7 @@ metadata:
     nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
   rules:
-  - host: "STACK_NAME-admin.sloanahrens.com"
+  - host: "STACK_NAME-admin.the-evolutionist.com"
     http:
       paths:
       - path: /

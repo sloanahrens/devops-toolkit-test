@@ -4,6 +4,7 @@ WORKDIR /app
 COPY ./ui/package*.json ./
 RUN npm install
 COPY ./ui .
+RUN export NODE_OPTIONS=--openssl-legacy-provider
 RUN npm run build
 
 # production stage
